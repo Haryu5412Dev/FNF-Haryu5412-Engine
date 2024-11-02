@@ -5,6 +5,7 @@
 
 1. For Video Sprite Lua
 
+* ```makeCutSenceVideo('videoName')``` -- DEPRECATED!! OLD VideoSprite Code (but sometimes can be used...?)
 * ```makeVideo('videoName', 'camHUD');``` -- Play video to fill the screen. (autoplay)
 * ```pauseVideo('videoName');``` -- Pause video
 * ```resumeVideo('videoName');``` -- Resume paused video
