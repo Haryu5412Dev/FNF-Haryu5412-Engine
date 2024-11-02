@@ -1622,7 +1622,7 @@ class PlayState extends MusicBeatState
 				return;
 			}
 	
-			var video:VideoHandler = new VideoHandler();
+			var video:FlxVideo = new FlxVideo();
 				#if (hxCodec >= "3.0.0")
 				// Recent versions
 				video.play(filepath);
