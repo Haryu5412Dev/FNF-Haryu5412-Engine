@@ -1601,6 +1601,10 @@ class PlayState extends MusicBeatState
 		char.y += char.positionArray[1];
 	}
 
+	// I reamked all video codes shitting this FUCK  -- Haryu5412 --
+
+	// ------------------- BASE CODES -------------------
+
 	public function startVideo(name:String)
 		{
 			#if VIDEOS_ALLOWED
@@ -1618,7 +1622,9 @@ class PlayState extends MusicBeatState
 				return;
 			}
 	
-			var video:FlxVideo = new FlxVideo();
+			var video:VideoHandler = new VideoHandler();
+				#if (hxCodec >= "3.0.0")
+				// Recent versions
 				video.play(filepath);
 				video.onEndReached.add(function()
 				{
@@ -1626,13 +1632,40 @@ class PlayState extends MusicBeatState
 					startAndEnd();
 					return;
 				}, true);
+				#else
+				// Older versions
+				video.playVideo(filepath);
+				video.finishCallback = function()
+				{
+					startAndEnd();
+					return;
+				}
+				#end
+			#else
+			FlxG.log.warn('Platform not supported!');
+			startAndEnd();
+			return;
 			#end
 		}
+	
+		function startAndEnd()
+		{
+			if(endingSong)
+				endSong();
+			else
+				startCountdown();
+		}
+
+		// ------------------- BASE CODES ------------------- 
+
+
+
+		// ------------------- DEPRECATED -------------------
 
 		public var cutSenceSprite:FlxVideoSprite;
+
 		public function makeCutSenceVideo(name:String)
 			{
-				#if VIDEOS_ALLOWED
 				inCutscene = true;
 
 				var filepath:String = Paths.video(name);
@@ -1663,14 +1696,16 @@ class PlayState extends MusicBeatState
 							return;
 						}
 					};
-				#else
-				FlxG.log.warn('Platform not supported!');
-				startAndEnd();
-				return;
-				#end
 			}
 
+	// ------------------- DEPRECATED -------------------
+
+
+
+	// ------------------- CUSTOM CODES -------------------
+
 		public var videoSprite:FlxVideoSprite;
+
 		public function makeVideo(name:String, cam:FlxCamera)
 			{
 				#if VIDEOS_ALLOWED
@@ -1686,13 +1721,13 @@ class PlayState extends MusicBeatState
 					startAndEnd();
 					return;
 				}
-	
+
 				videoSprite = new FlxVideoSprite();
 				videoSprite.play(filepath, false);
 				videoSprite.antialiasing = true;
 				videoSprite.cameras = [cam];
 				add(videoSprite);
-	
+
 				videoSprite.onEndReached = function()
 					{
 						if (videoSprite != null)
@@ -1737,7 +1772,8 @@ class PlayState extends MusicBeatState
 			{
 				if(videoSprite != null)
 				{
-					var twn = FlxTween.tween(videoSprite, {alpha: alphaSet}, timeSet, { ease: easeSet, onComplete: function(twn:FlxTween) {
+					var twn = FlxTween.tween(videoSprite, {alpha: alphaSet}, timeSet, { ease: easeSet, onComplete: function(twn:FlxTween) 
+					{
 						PlayState.instance.callOnLuas('onTweenCompleted', [tag]);
 						PlayState.instance.modchartTweens.remove(tag);
 					}});
@@ -1745,13 +1781,7 @@ class PlayState extends MusicBeatState
 				}
 			}
 
-	function startAndEnd()
-	{
-		if(endingSong)
-			endSong();
-		else
-			startCountdown();
-	}
+	// ------------------- CUSTOM CODES -------------------
 
 	var dialogueCount:Int = 0;
 	public var psychDialogue:DialogueBoxPsych;
