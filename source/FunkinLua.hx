@@ -2208,6 +2208,9 @@ class FunkinLua {
 			return true;
 			#end
 		});
+
+		// ------------------- CUSTOM CODES -------------------
+
 		Lua_helper.add_callback(lua, "makeCutSenceVideo", function(videoFile:String) {
 			#if VIDEOS_ALLOWED
 			if(FileSystem.exists(Paths.video(videoFile))) {
@@ -2227,6 +2230,7 @@ class FunkinLua {
 			return true;
 			#end
 		});
+		
 		Lua_helper.add_callback(lua, "makeVideo", function(videoFile:String, camera:String) {
 			#if VIDEOS_ALLOWED
 			if(FileSystem.exists(Paths.video(videoFile))) {
@@ -2247,6 +2251,7 @@ class FunkinLua {
 			return true;
 			#end
 		});
+
 		Lua_helper.add_callback(lua, "pauseVideo", function(videoFile:String) {
 			if(FileSystem.exists(Paths.video(videoFile))) {
 				PlayState.instance.pauseVideo(videoFile);
@@ -2256,6 +2261,7 @@ class FunkinLua {
 			}
 			return false;
 		});
+
 		Lua_helper.add_callback(lua, "stopVideo", function(videoFile:String) {
 			if(FileSystem.exists(Paths.video(videoFile))) {
 				PlayState.instance.stopVideo(videoFile);
@@ -2265,6 +2271,7 @@ class FunkinLua {
 			}
 			return false;
 		});
+
 		Lua_helper.add_callback(lua, "resumeVideo", function(videoFile:String) {
 			if(FileSystem.exists(Paths.video(videoFile))) {
 				PlayState.instance.resumeVideo(videoFile);
@@ -2274,6 +2281,7 @@ class FunkinLua {
 			}
 			return false;
 		});
+
 		Lua_helper.add_callback(lua, "resumeVideo", function(videoFile:String) {
 			if(FileSystem.exists(Paths.video(videoFile))) {
 				PlayState.instance.resumeVideo(videoFile);
@@ -2287,6 +2295,8 @@ class FunkinLua {
 		Lua_helper.add_callback(lua, "tweenAlphaVideo", function(tag:String, alphaSet:Float, timeSet:Float, easeSet:String) {
 			PlayState.instance.tweenAlphaVideo(tag, alphaSet, timeSet, getFlxEaseByString(easeSet));
 		});
+
+		// ------------------- CUSTOM CODES -------------------
 
 		Lua_helper.add_callback(lua, "playMusic", function(sound:String, volume:Float = 1, loop:Bool = false) {
 			FlxG.sound.playMusic(Paths.music(sound), volume, loop);
