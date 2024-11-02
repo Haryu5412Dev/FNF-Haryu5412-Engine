@@ -11,3 +11,4 @@
 * ```stopVideo('videoName');``` -- Stop video (+ delete)
 * ```tweenAlphaVideo("Tween", 0, 0.5, "linear");``` -- Video alpha tween
   * In order ( tween tag, start alpha, end alpha, tween type )
+* ```setAlphaVideo('videoName', 1.0);``` -- Sets Video Alpha
