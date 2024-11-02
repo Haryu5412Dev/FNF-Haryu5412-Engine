@@ -1704,90 +1704,98 @@ class PlayState extends MusicBeatState
 
 	// ------------------- CUSTOM CODES -------------------
 
-		public var videoSprite:FlxVideoSprite;
+	public var videoSprites:Map<String, FlxVideoSprite> = new Map();
 
-		public function makeVideo(name:String, cam:FlxCamera)
-			{
-				#if VIDEOS_ALLOWED
-		
-				var filepath:String = Paths.video(name);
-				#if sys
-				if(!FileSystem.exists(filepath))
-				#else
-				if(!OpenFlAssets.exists(filepath))
-				#end
-				{
-					FlxG.log.warn('Couldnt find video file: ' + name);
-					startAndEnd();
-					return;
-				}
-
-				videoSprite = new FlxVideoSprite();
-				videoSprite.play(filepath, false);
-				videoSprite.antialiasing = true;
-				videoSprite.cameras = [cam];
-				add(videoSprite);
-
-				videoSprite.onEndReached = function()
-					{
-						if (videoSprite != null)
-							videoSprite.stop();
-						remove(videoSprite);
-						startAndEnd();
-						return;
-					};
-				#else
-				FlxG.log.warn('Platform not supported!');
-				startAndEnd();
-				return;
-				#end
-			}
-
-		public function resumeVideo(name:String)
+	public function makeVideo(name:String, tag:String, cam:FlxCamera)
+	{
+		#if VIDEOS_ALLOWED
+		var filepath:String = Paths.video(name);
+		#if sys
+		if(!FileSystem.exists(filepath))
+		#else
+		if(!OpenFlAssets.exists(filepath))
+		#end
 		{
+			FlxG.log.warn('Couldnt find video file: ' + name);
+			startAndEnd();
+			return;
+		}
+	
+		var videoSprite = new FlxVideoSprite();
+		videoSprite.play(filepath, false);
+		videoSprite.antialiasing = true;
+		videoSprite.cameras = [cam];
+		add(videoSprite);
+	
+		videoSprites.set(tag, videoSprite);
+	
+		videoSprite.onEndReached = function()
+		{
+			if (videoSprite != null)
+				videoSprite.stop();
+			remove(videoSprite);
+			videoSprites.remove(tag);
+			startAndEnd();
+			return;
+		};
+		#else
+		FlxG.log.warn('Platform not supported!');
+		startAndEnd();
+		return;
+		#end
+	}
+	
+	public function resumeVideo(tag:String)
+		{
+			var videoSprite = videoSprites.get(tag);
 			if(videoSprite != null)
 			{
 				videoSprite.resume();
 			}
 		}
 
-		public function pauseVideo(name:String)
+	public function pauseVideo(tag:String)
 		{
+			var videoSprite = videoSprites.get(tag);
 			if(videoSprite != null)
 			{
 				videoSprite.pause();
 			}
 		}
 
-		public function stopVideo(name:String)
+	public function stopVideo(tag:String)
 		{
+			var videoSprite = videoSprites.get(tag);
 			if(videoSprite != null)
 			{
 				videoSprite.stop();
 				remove(videoSprite);
+				videoSprites.remove(tag);
 			}
 		}
 
-		public function setAlphaVideo(name:String, alphaSet:Float)
+	public function setAlphaVideo(tag:String, alphaSet:Float)
+	{
+		var videoSprite = videoSprites.get(tag);
+		if(videoSprite != null)
+		{
+			videoSprite.alpha = alphaSet;
+		}
+	}
+	
+	public function tweenAlphaVideo(twtag:String, tag:String, alphaSet:Float, timeSet:Float, easeSet:Null<flixel.tweens.EaseFunction>)
+	{
+		var videotag = videoSprites.get(tag);
+		if(videotag != null)
+		{
+			var twn = FlxTween.tween(videotag, {alpha: alphaSet}, timeSet, { ease: easeSet, onComplete: function(twn:FlxTween) 
 			{
-				if(videoSprite != null)
-				{
-					videoSprite.alpha = alphaSet;
-				}
-			}
-
-		public function tweenAlphaVideo(tag:String, alphaSet:Float, timeSet:Float, easeSet:Null<flixel.tweens.EaseFunction>)
-			{
-				if(videoSprite != null)
-				{
-					var twn = FlxTween.tween(videoSprite, {alpha: alphaSet}, timeSet, { ease: easeSet, onComplete: function(twn:FlxTween) 
-					{
-						PlayState.instance.callOnLuas('onTweenCompleted', [tag]);
-						PlayState.instance.modchartTweens.remove(tag);
-					}});
-					PlayState.instance.modchartTweens.set(tag, twn);
-				}
-			}
+				PlayState.instance.callOnLuas('onTweenCompleted', [twtag]);
+				PlayState.instance.modchartTweens.remove(twtag);
+			}});
+			PlayState.instance.modchartTweens.set(twtag, twn);
+		}
+	}
 
 	// ------------------- CUSTOM CODES -------------------
 
@@ -2887,10 +2895,13 @@ class PlayState extends MusicBeatState
 	{
 		if (paused)
 		{
-			if(videoSprite != null)
-			{
-				videoSprite.pause();
-			}
+        for (videoSprite in videoSprites)
+        {
+            if (videoSprite != null)
+            {
+                videoSprite.pause();
+            }
+        }
 
 			if (FlxG.sound.music != null)
 			{
@@ -2929,10 +2940,13 @@ class PlayState extends MusicBeatState
 	{
 		if (paused)
 		{
-			if (videoSprite != null)
-			{
-				videoSprite.resume();
-			}
+			for (videoSprite in videoSprites)
+				{
+					if (videoSprite != null)
+					{
+						videoSprite.resume();
+					}
+				}
 
 			if (FlxG.sound.music != null && !startingSong)
 			{

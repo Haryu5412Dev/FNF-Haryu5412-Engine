@@ -6,10 +6,10 @@
 - **For Video Sprite Lua**
 
 * ```makeCutSenceVideo('videoName')``` -- DEPRECATED!! OLD VideoSprite Code (but sometimes can be used...?)
-* ```makeVideo('videoName', 'camHUD');``` -- Play video to fill the screen. (autoplay)
-* ```pauseVideo('videoName');``` -- Pause video
-* ```resumeVideo('videoName');``` -- Resume paused video
-* ```stopVideo('videoName');``` -- Stop video (+ delete)
-* ```tweenAlphaVideo("Tween", 0, 0.5, "linear");``` -- Video alpha tween
+* ```makeVideo('videoName', 'videoTag', 'camHUD');``` -- Play video to fill the screen. (autoplay)
+* ```pauseVideo('videoTag');``` -- Pause video
+* ```resumeVideo('videoTag');``` -- Resume paused video
+* ```stopVideo('videoTag');``` -- Stop video (+ delete)
+* ```tweenAlphaVideo("TweenTag", "videoTag", 0, 0.5, "linear");``` -- Video alpha tween
   * In order ( tween tag, start alpha, end alpha, tween type )
-* ```setAlphaVideo('videoName', 1.0);``` -- Sets Video Alpha
+* ```setAlphaVideo('videoTag', 1.0);``` -- Sets Video Alpha

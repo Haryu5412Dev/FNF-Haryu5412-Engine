@@ -2231,17 +2231,17 @@ class FunkinLua {
 			#end
 		});
 
-		Lua_helper.add_callback(lua, "makeVideo", function(videoFile:String, camera:String) {
+		Lua_helper.add_callback(lua, "makeVideo", function(name:String, tag:String, camera:String) {
 			#if VIDEOS_ALLOWED
-			if(FileSystem.exists(Paths.video(videoFile))) {
+			if(FileSystem.exists(Paths.video(name))) {
 				var cam:FlxCamera = cameraFromString(camera);
-				PlayState.instance.makeVideo(videoFile, cam);
+				PlayState.instance.makeVideo(name, tag, cam);
 				return true;
 			} else {
-				luaTrace('makeVideoSprite: Video file not found: ' + videoFile, false, false, FlxColor.RED);
+				luaTrace('makeVideo: Video file not found: ' + name, false, false, FlxColor.RED);
 			}
 			return false;
-
+		
 			#else
 			if(PlayState.instance.endingSong) {
 				PlayState.instance.endSong();
@@ -2252,52 +2252,24 @@ class FunkinLua {
 			#end
 		});
 
-		Lua_helper.add_callback(lua, "pauseVideo", function(videoFile:String) {
-			if(FileSystem.exists(Paths.video(videoFile))) {
-				PlayState.instance.pauseVideo(videoFile);
-				return true;
-			} else {
-				luaTrace('pauseVideo: Video file not found: ' + videoFile, false, false, FlxColor.RED);
-			}
-			return false;
+		Lua_helper.add_callback(lua, "pauseVideo", function(tag:String) {
+			PlayState.instance.pauseVideo(tag);
 		});
 
-		Lua_helper.add_callback(lua, "stopVideo", function(videoFile:String) {
-			if(FileSystem.exists(Paths.video(videoFile))) {
-				PlayState.instance.stopVideo(videoFile);
-				return true;
-			} else {
-				luaTrace('stopVideo: Video Sprite not found: ' + videoFile, false, false, FlxColor.RED);
-			}
-			return false;
+		Lua_helper.add_callback(lua, "stopVideo", function(tag:String) {
+			PlayState.instance.stopVideo(tag);
 		});
 
-		Lua_helper.add_callback(lua, "resumeVideo", function(videoFile:String) {
-			if(FileSystem.exists(Paths.video(videoFile))) {
-				PlayState.instance.resumeVideo(videoFile);
-				return true;
-			} else {
-				luaTrace('resumeVideo: Video Sprite not found: ' + videoFile, false, false, FlxColor.RED);
-			}
-			return false;
-		});
-
-		Lua_helper.add_callback(lua, "resumeVideo", function(videoFile:String) {
-			if(FileSystem.exists(Paths.video(videoFile))) {
-				PlayState.instance.resumeVideo(videoFile);
-				return true;
-			} else {
-				luaTrace('startVideo: Video Sprite not found: ' + videoFile, false, false, FlxColor.RED);
-			}
-			return false;
+		Lua_helper.add_callback(lua, "resumeVideo", function(tag:String) {
+			PlayState.instance.resumeVideo(tag);
 		});
 
 		Lua_helper.add_callback(lua, "setAlphaVideo", function(tag:String, alphaSet:Float) {
 			PlayState.instance.setAlphaVideo(tag, alphaSet);
 		});
 
-		Lua_helper.add_callback(lua, "tweenAlphaVideo", function(tag:String, alphaSet:Float, timeSet:Float, easeSet:String) {
-			PlayState.instance.tweenAlphaVideo(tag, alphaSet, timeSet, getFlxEaseByString(easeSet));
+		Lua_helper.add_callback(lua, "tweenAlphaVideo", function(twtag:String, videotag:String, alphaSet:Float, timeSet:Float, easeSet:String) {
+			PlayState.instance.tweenAlphaVideo(twtag, videotag, alphaSet, timeSet, getFlxEaseByString(easeSet));
 		});
 
 		// ------------------- CUSTOM CODES -------------------

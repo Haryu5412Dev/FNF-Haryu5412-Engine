@@ -2,7 +2,7 @@
 <project>
 	<!-- _________________________ Application Settings _________________________ -->
 
-	<app title="Friday Night Funkin': Haryu5412 Engine" file="HaryuEngine" packageName="com.Haryu5412.haryuengine" package="com.Haryu5412.haryuengine" main="Main" version="0.5.2b" company="Haryu5412" />
+	<app title="Friday Night Funkin': Haryu5412 Engine" file="HaryuEngine" packageName="com.Haryu5412.haryuengine" package="com.Haryu5412.haryuengine" main="Main" version="0.5.2" company="Haryu5412" />
 
 	<!--Switch Export with Unique ApplicationID and Icon-->
 	<set name="APP_ID" value="0x0100f6c013bbc000" />
