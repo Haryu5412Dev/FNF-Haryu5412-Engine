@@ -8,12 +8,12 @@
 
 ### **For Video Sprite Lua**
 
-**-- DEPRECATED!! OLD VideoSprite Make Code (but sometimes can be used...?)**
+  **-- DEPRECATED!! OLD VideoSprite Make Code (but sometimes can be used...?)**
 - ```lua
   makeCutSenceVideo('videoName')
   ```
 
-**-- Play video to fill the screen. (autoplay)**
+  **-- Play video to fill the screen. (autoplay)**
 - ```lua
   makeVideo('videoName', 'videoTag', 'camHUD')
   ```
