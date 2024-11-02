@@ -8,35 +8,41 @@
 
 ### **For Video Sprite Lua**
 
+**-- DEPRECATED!! OLD VideoSprite Make Code (but sometimes can be used...?)**
 - ```lua
   makeCutSenceVideo('videoName')
   ```
-  **-- DEPRECATED!! OLD VideoSprite Make Code (but sometimes can be used...?)**
+
+**-- Play video to fill the screen. (autoplay)**
 - ```lua
   makeVideo('videoName', 'videoTag', 'camHUD')
   ```
-  **-- Play video to fill the screen. (autoplay)**
+
+  **-- Pause video**  
 - ```lua
   pauseVideo('videoTag')
   ```
-  **-- Pause video**
+
+  **-- Resume paused video**
 - ```lua
   resumeVideo('videoTag')
   ```
-  **-- Resume paused video**
+
+  **-- Stop video (+ delete)**
 - ```lua
   stopVideo('videoTag')
   ```
-  **-- Stop video (+ delete)**
-- ```lua
-  tweenAlphaVideo("TweenTag", "videoTag", 0, 0.5, "linear")
-  ```
+
   **-- Video alpha tween**
   - **In order (tween tag, start alpha, end alpha, tween type)**
 - ```lua
+  tweenAlphaVideo("TweenTag", "videoTag", 0, 0.5, "linear")
+  ```
+
+  **-- Sets Video Alpha**
+- ```lua
   setAlphaVideo('videoTag', 1.0)
   ```
-  **-- Sets Video Alpha**
 
 ---
 
