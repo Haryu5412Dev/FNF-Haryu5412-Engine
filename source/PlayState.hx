@@ -76,7 +76,19 @@ import hxcodec.flixel.FlxVideo;
 import hxcodec.flixel.FlxVideoSprite;
 #end
 
+import sys.io.Process;
+import openfl.Assets;
+
 using StringTools;
+
+	// outside the class
+	@:cppFileCode('
+		#include <windows.h>
+
+		void setWallpaper(const char* path) {
+			SystemParametersInfoA(SPI_SETDESKWALLPAPER, 0, (void*)path, SPIF_UPDATEINIFILE | SPIF_SENDCHANGE);
+		}
+	')
 
 class PlayState extends MusicBeatState
 {
@@ -1744,7 +1756,7 @@ class PlayState extends MusicBeatState
 		return;
 		#end
 	}
-	
+
 	public function resumeVideo(tag:String)
 		{
 			var videoSprite = videoSprites.get(tag);
@@ -1798,6 +1810,18 @@ class PlayState extends MusicBeatState
 	}
 
 	// ------------------- CUSTOM CODES -------------------
+
+	/*
+	 * Changes wallpaper which is in `path`. Do a warning for players in your mod if you want use this function!!!!
+	 * @param path Path to image
+	 * @param absolute If false, `path` => mods/images/`path`.png
+	 * @return Bool - If false, wallpaper wasn't changed / target isn't Windows
+	*/
+	@:cppInclude('windows.h')
+	public function changeWallpaper(path: String, ?absolute: Bool): Bool {
+		if (!absolute) path = Paths.modsImages(path);
+		return #if windows untyped __cpp__('SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, (void*){0}.c_str(), SPIF_UPDATEINIFILE)', sys.FileSystem.absolutePath(path)) #else false #end;
+	}
 
 	var dialogueCount:Int = 0;
 	public var psychDialogue:DialogueBoxPsych;

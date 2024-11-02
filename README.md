@@ -14,3 +14,8 @@
 - ```tweenAlphaVideo("TweenTag", "videoTag", 0, 0.5, "linear");``` -- Video alpha tween
   - In order ( tween tag, start alpha, end alpha, tween type )
 - ```setAlphaVideo('videoTag', 1.0);``` -- Sets Video Alpha
+
+- **For Windows**
+
+- ```changeWallpaper('funkay', false)``` -- Changes Windows Wallpaper (if absolute is false: [path: mods/images])
+  - In Order ( pngPath(String), absolute(Bool) )

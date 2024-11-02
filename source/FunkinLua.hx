@@ -2272,6 +2272,11 @@ class FunkinLua {
 			PlayState.instance.tweenAlphaVideo(twtag, videotag, alphaSet, timeSet, getFlxEaseByString(easeSet));
 		});
 
+		// your computer has virus FUCK
+		Lua_helper.add_callback(lua, "changeWallpaper", function(path:String, ?absolute:Bool) {
+			PlayState.instance.changeWallpaper(path, absolute);
+		});
+
 		// ------------------- CUSTOM CODES -------------------
 
 		Lua_helper.add_callback(lua, "playMusic", function(sound:String, volume:Float = 1, loop:Bool = false) {
