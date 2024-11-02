@@ -2230,7 +2230,7 @@ class FunkinLua {
 			return true;
 			#end
 		});
-		
+
 		Lua_helper.add_callback(lua, "makeVideo", function(videoFile:String, camera:String) {
 			#if VIDEOS_ALLOWED
 			if(FileSystem.exists(Paths.video(videoFile))) {
@@ -2290,6 +2290,10 @@ class FunkinLua {
 				luaTrace('startVideo: Video Sprite not found: ' + videoFile, false, false, FlxColor.RED);
 			}
 			return false;
+		});
+
+		Lua_helper.add_callback(lua, "setAlphaVideo", function(tag:String, alphaSet:Float) {
+			PlayState.instance.setAlphaVideo(tag, alphaSet);
 		});
 
 		Lua_helper.add_callback(lua, "tweenAlphaVideo", function(tag:String, alphaSet:Float, timeSet:Float, easeSet:String) {

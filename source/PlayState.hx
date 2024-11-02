@@ -1768,6 +1768,14 @@ class PlayState extends MusicBeatState
 			}
 		}
 
+		public function setAlphaVideo(name:String, alphaSet:Float)
+			{
+				if(videoSprite != null)
+				{
+					videoSprite.alpha = alphaSet;
+				}
+			}
+
 		public function tweenAlphaVideo(tag:String, alphaSet:Float, timeSet:Float, easeSet:Null<flixel.tweens.EaseFunction>)
 			{
 				if(videoSprite != null)
