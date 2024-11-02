@@ -48,7 +48,7 @@
 
 ### **For Windows**
 
-  **-- Changes Windows Wallpaper (if absolute is false: [path: mods/images])**
+  **-- Changes Windows Wallpaper (if absolute is false: [path: mods/images])**\n
   **-- In Order ( pngPath(String), absolute(Bool) )**
 - ```lua
   changeWallpaper('funkay', false)
