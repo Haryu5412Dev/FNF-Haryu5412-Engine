@@ -163,6 +163,8 @@ class ChartingState extends MusicBeatState
 
 	var zoomTxt:FlxText;
 
+	var songLength:Float = 0;
+
 	var zoomList:Array<Float> = [
 		0.25,
 		0.5,
@@ -327,7 +329,7 @@ class ChartingState extends MusicBeatState
 		Conductor.changeBPM(_song.bpm);
 		Conductor.mapBPMChanges(_song);
 
-		bpmTxt = new FlxText(1000, 50, 0, "", 16);
+		bpmTxt = new FlxText(1000, 65, 0, "", 16);
 		bpmTxt.scrollFactor.set();
 		add(bpmTxt);
 
@@ -416,10 +418,12 @@ class ChartingState extends MusicBeatState
 		add(nextRenderedSustains);
 		add(nextRenderedNotes);
 
-		songSlider = new FlxUISlider(FlxG.sound.music, 'time', 1000, 15, 0, FlxG.sound.music.length, 250, 15, 5);
-		songSlider.valueLabel.visible = true;
-		songSlider.maxLabel.visible = true;
-		songSlider.minLabel.visible = true;
+		songSlider = new FlxUISlider(FlxG.sound.music, 'time', 1000, 15, 0, FlxG.sound.music.length	, 250, 15, 5, FlxColor.WHITE, FlxColor.GRAY);
+		songSlider.valueLabel.visible = false;
+		songSlider.minLabel.text = formatTime(0); // 시작 시간 (0초)
+		songSlider.maxLabel.text = formatTime(songLength / 1004); // 최대 시간 (노래 길이)
+		songSlider.nameLabel.text = 'Song Time';
+		songSlider.nameLabel.color = FlxColor.WHITE;
 		add(songSlider);
 		songSlider.scrollFactor.set();
 		songSlider.callback = function(fuck:Float)
@@ -435,6 +439,12 @@ class ChartingState extends MusicBeatState
 
 		updateGrid();
 		super.create();
+	}
+
+	function formatTime(seconds:Float):String {
+		var minutes:Int = Std.int(seconds / 60);
+		var secs:Int = Std.int(seconds % 60);
+		return Std.string(minutes) + ":" + (secs < 10 ? "0" + Std.string(secs) : Std.string(secs));
 	}
 
 	var check_mute_inst:FlxUICheckBox = null;
@@ -1420,6 +1430,7 @@ class ChartingState extends MusicBeatState
 
 	function generateSong() {
 		FlxG.sound.playMusic(Paths.inst(currentSongName), 0.6/*, false*/);
+		if (FlxG.sound.music != null) songLength = FlxG.sound.music.length;
 		if (instVolume != null) FlxG.sound.music.volume = instVolume.value;
 		if (check_mute_inst != null && check_mute_inst.checked) FlxG.sound.music.volume = 0;
 
@@ -1430,7 +1441,6 @@ class ChartingState extends MusicBeatState
 			if(vocals != null) {
 				vocals.pause();
 				vocals.time = 0;
-				songSlider.maxValue = FlxG.sound.music.length;
 			}
 			changeSection();
 			curSec = 0;
@@ -1585,6 +1595,10 @@ class ChartingState extends MusicBeatState
 	override function update(elapsed:Float)
 	{
 		curStep = recalculateSteps();
+
+		songSlider.callback = function(currentTime:Float) {
+			songSlider.valueLabel.text = formatTime(currentTime);
+		};
 
 		if(FlxG.sound.music.time < 0) {
 			FlxG.sound.music.pause();
