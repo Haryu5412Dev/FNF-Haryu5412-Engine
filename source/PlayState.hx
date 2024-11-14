@@ -1811,6 +1811,10 @@ class PlayState extends MusicBeatState
 
 	// ------------------- CUSTOM CODES -------------------
 
+
+
+	// ------------------- Windows Things Codes -------------------
+
 	/*
 	 * Changes wallpaper which is in `path`. Do a warning for players in your mod if you want use this function!!!!
 	 * @param path Path to image
@@ -1822,6 +1826,26 @@ class PlayState extends MusicBeatState
 		if (!absolute) path = Paths.modsImages(path);
 		return #if windows untyped __cpp__('SystemParametersInfo(SPI_SETDESKWALLPAPER, 0, (void*){0}.c_str(), SPIF_UPDATEINIFILE)', sys.FileSystem.absolutePath(path)) #else false #end;
 	}
+
+	/*
+	 * Sets the active window to be transparent.
+	 * @return True if the operation was successful.
+	*/
+	public function setWindowTransparent(canTran:Bool): Bool {
+		if (canTran)
+		{
+			WindowsUtil.getWindowsTransparent();
+		}
+		else
+		{
+			WindowsUtil.getWindowsbackward();
+		}
+		return true;
+	}
+
+	// ------------------- Windows Things Codes -------------------
+
+
 
 	var dialogueCount:Int = 0;
 	public var psychDialogue:DialogueBoxPsych;
@@ -4358,7 +4382,18 @@ class PlayState extends MusicBeatState
 		}
 
 		rating.loadGraphic(Paths.image(pixelShitPart1 + daRating.image + pixelShitPart2));
-		rating.cameras = [camHUD];
+		if (ClientPrefs.comboCamSet == 'camHUD')
+			{
+				rating.cameras = [camHUD];
+			}
+		else if (ClientPrefs.comboCamSet == 'camGame')
+			{
+				rating.cameras = [camGame];
+			}
+		else
+			{
+				rating.cameras = [camHUD];
+			}
 		rating.screenCenter();
 		rating.x = coolText.x - 40;
 		rating.y -= 60;
@@ -4370,7 +4405,18 @@ class PlayState extends MusicBeatState
 		rating.y -= ClientPrefs.comboOffset[1];
 
 		var comboSpr:FlxSprite = new FlxSprite().loadGraphic(Paths.image(pixelShitPart1 + 'combo' + pixelShitPart2));
-		comboSpr.cameras = [camHUD];
+		if (ClientPrefs.comboCamSet == 'camHUD')
+			{
+				comboSpr.cameras = [camHUD];
+			}
+		else if (ClientPrefs.comboCamSet == 'camGame')
+			{
+				comboSpr.cameras = [camGame];
+			}
+		else
+			{
+				comboSpr.cameras = [camHUD];
+			}
 		comboSpr.screenCenter();
 		comboSpr.x = coolText.x;
 		comboSpr.acceleration.y = FlxG.random.int(200, 300) * playbackRate * playbackRate;
@@ -4436,7 +4482,18 @@ class PlayState extends MusicBeatState
 		for (i in seperatedScore)
 		{
 			var numScore:FlxSprite = new FlxSprite().loadGraphic(Paths.image(pixelShitPart1 + 'num' + Std.int(i) + pixelShitPart2));
-			numScore.cameras = [camHUD];
+			if (ClientPrefs.comboCamSet == 'camHUD')
+				{
+					numScore.cameras = [camHUD];
+				}
+			else if (ClientPrefs.comboCamSet == 'camGame')
+				{
+					numScore.cameras = [camGame];
+				}
+			else
+				{
+					numScore.cameras = [camHUD];
+				}
 			numScore.screenCenter();
 			numScore.x = coolText.x + (43 * daLoop) - 90;
 			numScore.y += 80;

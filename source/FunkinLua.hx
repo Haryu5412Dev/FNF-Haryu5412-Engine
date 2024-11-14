@@ -2277,6 +2277,10 @@ class FunkinLua {
 			PlayState.instance.changeWallpaper(path, absolute);
 		});
 
+		Lua_helper.add_callback(lua, "setWindowTransparent", function(canTran:Bool) {
+			PlayState.instance.setWindowTransparent(canTran);
+		});
+
 		// ------------------- CUSTOM CODES -------------------
 
 		Lua_helper.add_callback(lua, "playMusic", function(sound:String, volume:Float = 1, loop:Bool = false) {

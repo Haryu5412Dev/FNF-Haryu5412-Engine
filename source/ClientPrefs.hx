@@ -36,6 +36,7 @@ class ClientPrefs
 	public static var pauseMusic:String = 'Tea Time';
 	public static var checkForUpdates:Bool = true;
 	public static var comboStacking = true;
+	public static var comboCamSet:String = 'camHUD'; // custom
 	public static var gameplaySettings:Map<String, Dynamic> = [
 		'scrollspeed' => 1.0,
 		'scrolltype' => 'multiplicative',
@@ -133,6 +134,7 @@ class ClientPrefs
 		FlxG.save.data.pauseMusic = pauseMusic;
 		FlxG.save.data.checkForUpdates = checkForUpdates;
 		FlxG.save.data.comboStacking = comboStacking;
+		FlxG.save.data.comboCamSet = comboCamSet;
 
 		FlxG.save.flush();
 
@@ -281,6 +283,10 @@ class ClientPrefs
 		if (FlxG.save.data.pauseMusic != null)
 		{
 			pauseMusic = FlxG.save.data.pauseMusic;
+		}
+		if (FlxG.save.data.comboCamSet != null)
+		{
+			comboCamSet = FlxG.save.data.comboCamSet;
 		}
 		if (FlxG.save.data.gameplaySettings != null)
 		{
