@@ -65,7 +65,6 @@ class FPS extends TextField
     }
 
     public static function createFPSText() {
-        if (ClientPrefs.showFPS) {
             fpsText = new TextField();
             fpsText.defaultTextFormat = new TextFormat("VCR OSD Mono", 15, 0xFFFFFFFF);
             fpsText.text = " ";
@@ -79,7 +78,6 @@ class FPS extends TextField
             fpsText.autoSize = LEFT;
 			fpsText.alpha = 0.8;
             Lib.current.addChild(fpsText);
-        }
     }
 
     @:noCompletion
