@@ -30,6 +30,7 @@ class ClientPrefs
 	public static var timeBarType:String = 'Time Left';
 	public static var scoreZoom:Bool = true;
 	public static var noReset:Bool = false;
+	public static var autoPauseSet:Bool = true;
 	public static var healthBarAlpha:Float = 1;
 	public static var controllerMode:Bool = false;
 	public static var hitsoundVolume:Float = 0;
@@ -118,6 +119,7 @@ class ClientPrefs
 		FlxG.save.data.timeBarType = timeBarType;
 		FlxG.save.data.scoreZoom = scoreZoom;
 		FlxG.save.data.noReset = noReset;
+		FlxG.save.data.autoPauseSet = autoPauseSet;
 		FlxG.save.data.healthBarAlpha = healthBarAlpha;
 		FlxG.save.data.comboOffset = comboOffset;
 		FlxG.save.data.achievementsMap = Achievements.achievementsMap;
@@ -147,6 +149,10 @@ class ClientPrefs
 
 	public static function loadPrefs()
 	{
+		if (FlxG.save.data.autoPauseSet != null)
+		{
+			autoPauseSet = FlxG.save.data.autoPauseSet;			
+		}
 		if (FlxG.save.data.downScroll != null)
 		{
 			downScroll = FlxG.save.data.downScroll;

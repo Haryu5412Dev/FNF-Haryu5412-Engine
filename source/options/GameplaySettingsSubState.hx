@@ -77,6 +77,14 @@ class GameplaySettingsSubState extends BaseOptionsMenu
 			false);
 		addOption(option);
 
+		var option:Option = new Option('AutoPause',
+			"If checked, the game will automatically pause\nwhen it loses focus.",
+			'autoPauseSet',
+			'bool',
+			false);
+		addOption(option);
+		option.onChange = onChangePause;
+
 		var option:Option = new Option('Hitsound Volume',
 			'Funny notes does \"Tick!\" when you hit them."',
 			'hitsoundVolume',
@@ -148,8 +156,14 @@ class GameplaySettingsSubState extends BaseOptionsMenu
 		super();
 	}
 
+	static function onChangePause()
+    {
+        FlxG.autoPause = ClientPrefs.autoPauseSet;
+    }
+
 	function onChangeHitsoundVolume()
 	{
 		FlxG.sound.play(Paths.sound('hitsound'), ClientPrefs.hitsoundVolume);
 	}
+
 }
