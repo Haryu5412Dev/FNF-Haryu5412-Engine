@@ -45,6 +45,9 @@ class MainMenuState extends MusicBeatState
 	var camFollowPos:FlxObject;
 	var debugKeys:Array<FlxKey>;
 
+	var cinematicDown:FlxSprite;
+    var cinematicUp:FlxSprite;
+
 	override function create()
 	{
 		#if MODS_ALLOWED
@@ -80,6 +83,15 @@ class MainMenuState extends MusicBeatState
 		bg.antialiasing = ClientPrefs.globalAntialiasing;
 		add(bg);
 
+		cinematicDown = new FlxSprite().makeGraphic(FlxG.width, 70, FlxColor.BLACK);
+        cinematicDown.setPosition(0, FlxG.height - 70);
+        cinematicDown.antialiasing = true;
+        add(cinematicDown);
+
+        cinematicUp = new FlxSprite().makeGraphic(FlxG.width, 100, FlxColor.BLACK);
+        cinematicUp.antialiasing = true;
+        add(cinematicUp);
+
 		camFollow = new FlxObject(0, 0, 1, 1);
 		camFollowPos = new FlxObject(0, 0, 1, 1);
 		add(camFollow);
@@ -98,12 +110,12 @@ class MainMenuState extends MusicBeatState
 		menuItems = new FlxTypedGroup<FlxSprite>();
 		add(menuItems);
 
-		var scale:Float = 1;
+		var scale:Float = 0.8;
 
 		for (i in 0...optionShit.length)
 		{
-			var offset:Float = 108 - (Math.max(optionShit.length, 4) - 4) * 80;
-			var menuItem:FlxSprite = new FlxSprite(0, (i * 140)  + offset);
+			var offset:Float = 108 - (Math.max(optionShit.length, 4) - 4) * 50;
+			var menuItem:FlxSprite = new FlxSprite(0, (i * 150)  + offset);
 			menuItem.scale.x = scale;
 			menuItem.scale.y = scale;
 			menuItem.frames = Paths.getSparrowAtlas('mainmenu/menu_' + optionShit[i]);
@@ -112,6 +124,7 @@ class MainMenuState extends MusicBeatState
 			menuItem.animation.play('idle');
 			menuItem.ID = i;
 			menuItem.screenCenter(X);
+			// menuItem.y += 100;
 			menuItems.add(menuItem);
 			var scr:Float = (optionShit.length - 4) * 0.135;
 			if(optionShit.length < 6) scr = 0;
