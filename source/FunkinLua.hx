@@ -2231,11 +2231,15 @@ class FunkinLua {
 			#end
 		});
 
-		Lua_helper.add_callback(lua, "makeVideo", function(name:String, tag:String, camera:String) {
+		Lua_helper.add_callback(lua, "playFinnVideo", function() {
+			PlayState.instance.playFinnVideo();
+		});
+
+		Lua_helper.add_callback(lua, "makeVideo", function(name:String, tag:String, camera:String, ?type:Int) {
 			#if VIDEOS_ALLOWED
 			if(FileSystem.exists(Paths.video(name))) {
 				var cam:FlxCamera = cameraFromString(camera);
-				PlayState.instance.makeVideo(name, tag, cam);
+				PlayState.instance.makeVideo(name, tag, cam, type);
 				return true;
 			} else {
 				luaTrace('makeVideo: Video file not found: ' + name, false, false, FlxColor.RED);
@@ -2250,6 +2254,14 @@ class FunkinLua {
 			}
 			return true;
 			#end
+		});
+
+		Lua_helper.add_callback(lua, "setPositionVideo", function(tag:String, x:Float, y:Float) {
+			PlayState.instance.setPositionVideo(tag, x, y);
+		});
+
+		Lua_helper.add_callback(lua, "scaleVideo", function(tag:String, scaleX:Float, scaleY:Float) {
+			PlayState.instance.scaleVideo(tag, scaleX, scaleY);
 		});
 
 		Lua_helper.add_callback(lua, "pauseVideo", function(tag:String) {

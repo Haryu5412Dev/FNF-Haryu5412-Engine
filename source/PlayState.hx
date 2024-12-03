@@ -135,6 +135,11 @@ class PlayState extends MusicBeatState
 	public var modchartSaves:Map<String, FlxSave> = new Map();
 	#end
 
+	// Video sprite stuff
+	public var cutSenceSprite:FlxVideoSprite;
+	public var finnVideoSprite:FlxVideoSprite;
+	public var videoSprites:Map<String, FlxVideoSprite> = new Map();
+
 	public var BF_X:Float = 770;
 	public var BF_Y:Float = 100;
 	public var DAD_X:Float = 100;
@@ -1674,8 +1679,6 @@ class PlayState extends MusicBeatState
 
 		// ------------------- DEPRECATED -------------------
 
-		public var cutSenceSprite:FlxVideoSprite;
-
 		public function makeCutSenceVideo(name:String)
 			{
 				inCutscene = true;
@@ -1710,15 +1713,64 @@ class PlayState extends MusicBeatState
 					};
 			}
 
+			public function playFinnVideo()
+				{
+					inCutscene = true;
+	
+					var filepath:String = Paths.video("cawm");
+					#if sys
+					if(!FileSystem.exists(filepath))
+					#else
+					if(!OpenFlAssets.exists(filepath))
+					#end
+					{
+						FlxG.log.warn('Couldnt find video file: ' + "cowm");
+						startAndEnd();
+						return;
+					}
+
+					var blackBox:FlxSprite = new FlxSprite(-300, -200).makeGraphic(3840, 2160, FlxColor.BLACK);
+					blackBox.screenCenter();
+					blackBox.scrollFactor.set();
+					blackBox.antialiasing = true;
+					blackBox.cameras = [camOther];
+					add(blackBox);
+
+					finnVideoSprite = new FlxVideoSprite(-320, -185);
+					finnVideoSprite.antialiasing = true;
+					finnVideoSprite.scale.set(0.6667, 0.6667);
+					finnVideoSprite.cameras = [camOther];
+					finnVideoSprite.play(filepath, false);
+					add(finnVideoSprite);
+
+					var whiteBox:FlxSprite = new FlxSprite(-300, -200).makeGraphic(3840, 2160, FlxColor.WHITE);
+					whiteBox.screenCenter();
+					whiteBox.scrollFactor.set();
+					whiteBox.antialiasing = true;
+					whiteBox.cameras = [camOther];
+					add(whiteBox);
+
+					FlxTween.tween(whiteBox, {alpha: 0.0}, 1.0, { ease: FlxEase.linear, startDelay: 0.25 } );
+		
+					finnVideoSprite.onEndReached = function()
+						{
+							if (finnVideoSprite != null)
+							{
+								finnVideoSprite.stop();
+								remove(finnVideoSprite);
+								startAndEnd();
+								return;
+							}
+						};
+				}
+
 	// ------------------- DEPRECATED -------------------
 
 
 
 	// ------------------- CUSTOM CODES -------------------
 
-	public var videoSprites:Map<String, FlxVideoSprite> = new Map();
-
-	public function makeVideo(name:String, tag:String, cam:FlxCamera)
+	public function makeVideo(name:String, tag:String, cam:FlxCamera, ?type:Int)
 	{
 		#if VIDEOS_ALLOWED
 		var filepath:String = Paths.video(name);
@@ -1732,12 +1784,59 @@ class PlayState extends MusicBeatState
 			startAndEnd();
 			return;
 		}
-	
+
+		var videoBox:FlxSprite = new FlxSprite().makeGraphic(1280, 720, FlxColor.TRANSPARENT);
+		videoBox.screenCenter();
+		videoBox.cameras = [camOther];
+		add(videoBox);
+
 		var videoSprite = new FlxVideoSprite();
 		videoSprite.play(filepath, false);
 		videoSprite.antialiasing = true;
 		videoSprite.cameras = [cam];
 		add(videoSprite);
+
+		if (type != null)
+		{
+			if (type == 1) 
+			{
+				videoSprite.scale.set(5.0, 5.0); // 144p
+			} 
+			else if (type == 2) 
+			{
+				videoSprite.scale.set(3.0, 3.0); // 240p
+			} 
+			else if (type == 3) 
+			{
+				videoSprite.scale.set(2.0, 2.0); // 360p
+			} 
+			else if (type == 4) 
+			{
+				videoSprite.scale.set(1.5, 1.5); // 480p
+			} 
+			else if (type == 5) 
+			{
+				videoSprite.scale.set(1.0, 1.0); // 720p
+			} 
+			else if (type == 6) 
+			{
+				videoSprite.scale.set(0.6667, 0.6667); // 1080p
+				videoSprite.x = -320;
+				videoSprite.y = -185;
+			} 
+			else if (type == 7) 
+			{
+				videoSprite.scale.set(0.5, 0.5); // 1440p
+			}
+			else 
+			{
+				videoSprite.scale.set(1.0, 1.0);
+			}
+		}
+		if (type == null)
+			{
+				videoSprite.scale.set(1.0, 1.0);
+			}
 	
 		videoSprites.set(tag, videoSprite);
 	
@@ -1755,6 +1854,24 @@ class PlayState extends MusicBeatState
 		startAndEnd();
 		return;
 		#end
+	}
+
+	public function setPositionVideo(tag:String, x:Float, y:Float) {
+		var videoSprite = videoSprites.get(tag);
+		if(videoSprite != null)
+		{
+			videoSprite.x = x;
+			videoSprite.y = y;
+		}
+	}
+
+	public function scaleVideo(tag:String, scaleX:Float, scaleY:Float)
+	{
+		var videoSprite = videoSprites.get(tag);
+		if(videoSprite != null)
+		{
+			videoSprite.scale.set(scaleX, scaleY);
+		}
 	}
 
 	public function resumeVideo(tag:String)
