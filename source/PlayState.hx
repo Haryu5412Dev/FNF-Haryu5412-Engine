@@ -1713,57 +1713,6 @@ class PlayState extends MusicBeatState
 					};
 			}
 
-			public function playFinnVideo()
-				{
-					inCutscene = true;
-	
-					var filepath:String = Paths.video("cawm");
-					#if sys
-					if(!FileSystem.exists(filepath))
-					#else
-					if(!OpenFlAssets.exists(filepath))
-					#end
-					{
-						FlxG.log.warn('Couldnt find video file: ' + "cowm");
-						startAndEnd();
-						return;
-					}
-
-					var blackBox:FlxSprite = new FlxSprite(-300, -200).makeGraphic(3840, 2160, FlxColor.BLACK);
-					blackBox.screenCenter();
-					blackBox.scrollFactor.set();
-					blackBox.antialiasing = true;
-					blackBox.cameras = [camOther];
-					add(blackBox);
-
-					finnVideoSprite = new FlxVideoSprite(-320, -185);
-					finnVideoSprite.antialiasing = true;
-					finnVideoSprite.scale.set(0.6667, 0.6667);
-					finnVideoSprite.cameras = [camOther];
-					finnVideoSprite.play(filepath, false);
-					add(finnVideoSprite);
-
-					var whiteBox:FlxSprite = new FlxSprite(-300, -200).makeGraphic(3840, 2160, FlxColor.WHITE);
-					whiteBox.screenCenter();
-					whiteBox.scrollFactor.set();
-					whiteBox.antialiasing = true;
-					whiteBox.cameras = [camOther];
-					add(whiteBox);
-
-					FlxTween.tween(whiteBox, {alpha: 0.0}, 1.0, { ease: FlxEase.linear, startDelay: 0.25 } );
-		
-					finnVideoSprite.onEndReached = function()
-						{
-							if (finnVideoSprite != null)
-							{
-								finnVideoSprite.stop();
-								remove(finnVideoSprite);
-								startAndEnd();
-								return;
-							}
-						};
-				}
-
 	// ------------------- DEPRECATED -------------------
 
 

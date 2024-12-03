@@ -2231,10 +2231,6 @@ class FunkinLua {
 			#end
 		});
 
-		Lua_helper.add_callback(lua, "playFinnVideo", function() {
-			PlayState.instance.playFinnVideo();
-		});
-
 		Lua_helper.add_callback(lua, "makeVideo", function(name:String, tag:String, camera:String, ?type:Int) {
 			#if VIDEOS_ALLOWED
 			if(FileSystem.exists(Paths.video(name))) {
