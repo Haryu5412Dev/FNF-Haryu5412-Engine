@@ -17,7 +17,19 @@
   **-- Play video to fill the screen. (autoplay)**
 
 - ```lua
-  makeVideo('videoName', 'videoTag', 'camHUD')
+  makeVideo('videoName', 'videoTag', 'camHUD', 5) -- Added Type!! Read bottom types
+  ```
+
+  **-- Sets Position Video**  
+
+- ```lua
+  setPositionVideo('videoTag', 0, 0)
+  ```
+
+  **-- Sets Scale Video**
+
+  ```lua
+  scaleVideo('videoTag', 1.0, 1.0)
   ```
 
   **-- Pause video**  
@@ -62,5 +74,19 @@
 - ```lua
   changeWallpaper('funkay', false)
   ```
+
+---
+
+---
+
+**-- Video Types**
+
+- **1:** 144p - 250 x 250
+- **2:** 240p - 426 x 240
+- **3:** 360p - 640 x 360
+- **4:** 480p - 854 x 480
+- **5:** 720p - 1280 x 720
+- **6:** 1080p - 1920 x 1080
+- **7:** 1440p - 2560 x 1440
 
 ---
