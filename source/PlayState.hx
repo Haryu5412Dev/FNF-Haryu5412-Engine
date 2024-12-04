@@ -1719,7 +1719,7 @@ class PlayState extends MusicBeatState
 
 	// ------------------- CUSTOM CODES -------------------
 
-	public function makeVideo(name:String, tag:String, cam:FlxCamera, ?type:Int)
+	public function makeVideo(name:String, tag:String, cam:FlxCamera, ?type:Int) // type added
 	{
 		#if VIDEOS_ALLOWED
 		var filepath:String = Paths.video(name);
@@ -1805,19 +1805,19 @@ class PlayState extends MusicBeatState
 		#end
 	}
 
-	public function setPositionVideo(tag:String, x:Float, y:Float) {
-		var videoSprite = videoSprites.get(tag);
-		if(videoSprite != null)
+	public function setPositionVideo(tag:String, x:Float, y:Float) { // setPositionVideo added
+		var videoSprite = videoSprites.get(tag); 
+		if (videoSprite != null)
 		{
 			videoSprite.x = x;
 			videoSprite.y = y;
 		}
 	}
 
-	public function scaleVideo(tag:String, scaleX:Float, scaleY:Float)
+	public function scaleVideo(tag:String, scaleX:Float, scaleY:Float) // scaleVideo added
 	{
 		var videoSprite = videoSprites.get(tag);
-		if(videoSprite != null)
+		if (videoSprite != null)
 		{
 			videoSprite.scale.set(scaleX, scaleY);
 		}
@@ -1874,6 +1874,9 @@ class PlayState extends MusicBeatState
 			PlayState.instance.modchartTweens.set(twtag, twn);
 		}
 	}
+
+	// Videospites are stored in a map, so you can access them by their tag
+	// and videosprites now low memory usage
 
 	// ------------------- CUSTOM CODES -------------------
 
