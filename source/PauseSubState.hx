@@ -20,7 +20,7 @@ class PauseSubState extends MusicBeatSubstate
 	var grpMenuShit:FlxTypedGroup<Alphabet>;
 
 	var menuItems:Array<String> = [];
-	var menuItemsOG:Array<String> = ['Resume', 'Restart Song', 'Skip Time', 'End Song', 'Change Difficulty', 'Exit to menu'];
+	var menuItemsOG:Array<String> = ['Resume', 'Restart Song', 'Change Difficulty', 'Exit to menu'];
 	var difficultyChoices = [];
 	var curSelected:Int = 0;
 
@@ -38,19 +38,34 @@ class PauseSubState extends MusicBeatSubstate
 		super();
 		if(CoolUtil.difficulties.length < 2) menuItemsOG.remove('Change Difficulty'); //No need to change difficulty if there is only one!
 
-		if(PlayState.chartingMode)
+		if (ClientPrefs.pauseStatePreferDebug)
 		{
-			menuItemsOG.insert(2, 'Leave Charting Mode');
-			
 			var num:Int = 0;
-			// if(!PlayState.instance.startingSong)
-			// {
-			// 	num = 1;
-			// 	menuItemsOG.insert(3, 'Skip Time');
-			// }
-			// menuItemsOG.insert(3 + num, 'End Song');
+			if(!PlayState.instance.startingSong)
+			{
+				num = 1;
+				menuItemsOG.insert(3, 'Skip Time');
+			}
+			menuItemsOG.insert(3 + num, 'End Song');
 			menuItemsOG.insert(4 + num, 'Toggle Practice Mode');
 			menuItemsOG.insert(5 + num, 'Toggle Botplay');
+		}
+
+		if (PlayState.chartingMode)
+		{
+			menuItemsOG.insert(2, 'Leave Charting Mode');
+			if (!ClientPrefs.pauseStatePreferDebug)
+			{
+				var num:Int = 0;
+				if(!PlayState.instance.startingSong)
+				{
+					num = 1;
+					menuItemsOG.insert(3, 'Skip Time');
+				}
+				menuItemsOG.insert(3 + num, 'End Song');
+				menuItemsOG.insert(4 + num, 'Toggle Practice Mode');
+				menuItemsOG.insert(5 + num, 'Toggle Botplay');
+			}
 		}
 		menuItems = menuItemsOG;
 

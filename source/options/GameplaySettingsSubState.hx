@@ -77,11 +77,18 @@ class GameplaySettingsSubState extends BaseOptionsMenu
 			false);
 		addOption(option);
 
-		var option:Option = new Option('AutoPause',
-			"If checked, the game will automatically pause\nwhen it loses focus.",
-			'autoPauseSet',
+		var option:Option = new Option('Pause Sub State Debug',
+			"If checked, the debug menu will appear in Pause Sub State\n(even without entering and exiting the charting menu).",
+			'pauseStatePreferDebug',
 			'bool',
 			false);
+		addOption(option);
+
+		var option:Option = new Option('AutoPause',
+		"If checked, the game will automatically pause\nwhen it loses focus.",
+		'autoPauseSet',
+		'bool',
+		false);
 		addOption(option);
 		option.onChange = onChangePause;
 
