@@ -82,7 +82,7 @@
   **-- for this [Resolution type] -> ```makeVideo(videoName, videoTag, Cam, [Resolution Type])```**
 
 ```
-  1 : (144p) - [250 x 250]
+  1 : (144p) - [256 x 144]
   2 : (240p) - [426 x 240]
   3 : (360p) - [640 x 360]
   4 : (480p) - [854 x 480]
