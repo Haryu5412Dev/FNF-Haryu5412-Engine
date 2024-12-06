@@ -1,4 +1,4 @@
-# FNF Haryu5412 Engine
+# FNF Haryu5412's Modding Engine
 
 [ Based Psych Engine 0.6.3 Git ]
 
@@ -17,7 +17,7 @@
   **-- Play video to fill the screen. (autoplay)**
 
 - ```lua
-  makeVideo('videoName', 'videoTag', 'camHUD', 5) -- Added Type!! Read bottom types
+  makeVideo('videoName', 'videoTag', 'camHUD', 5) -- Added Type!! Read resolution types
   ```
 
   **-- Sets Position Video**  
@@ -77,18 +77,18 @@
 
 ---
 
-### **Video Types**
+### **Video Resolution Types**
 
-  **-- for this [type] -> ```makeVideo(videoName, videoTag, Cam, [Type])```**
+  **-- for this [Resolution type] -> ```makeVideo(videoName, videoTag, Cam, [Resolution Type])```**
 
 ```
-  - 1: (144p) - [250 x 250]
-  - 2: (240p) - [426 x 240]
-  - 3: (360p) - [640 x 360]
-  - 4: (480p) - [854 x 480]
-  - 5: (720p) - [1280 x 720]
-  - 6: (1080p) - [1920 x 1080]
-  - 7: (1440p) - [2560 x 1440]
+  1 : (144p) - [256 x 144]
+  2 : (240p) - [426 x 240]
+  3 : (360p) - [640 x 360]
+  4 : (480p) - [854 x 480]
+  5 : (720p) - [1280 x 720]
+  6 : (1080p) - [1920 x 1080]
+  7 : (1440p) - [2560 x 1440]
 ```
 
 ---
