@@ -1750,26 +1750,26 @@ class PlayState extends MusicBeatState
 				if (type == 1) 
 				{
 					videoSprite.scale.set(5.0, 5.0); // 144p
-					videoSprite.x = -512; 
-					videoSprite.y = -288; 
+					videoSprite.x = 512.5;
+					videoSprite.y = 250; 
 				} 
 				else if (type == 2) 
 				{
 					videoSprite.scale.set(3.0, 3.0); // 240p
-					videoSprite.x = -384; 
-					videoSprite.y = -216; 
+					videoSprite.x = 384; 
+					videoSprite.y = 216;
 				} 
 				else if (type == 3) 
 				{
 					videoSprite.scale.set(2.0, 2.0); // 360p
-					videoSprite.x = -320; 
-					videoSprite.y = -180; 
+					videoSprite.x = 320; 
+					videoSprite.y = 180; 
 				} 
 				else if (type == 4) 
 				{
 					videoSprite.scale.set(1.5, 1.5); // 480p
-					videoSprite.x = -213; 
-					videoSprite.y = -120; 
+					videoSprite.x = 213; 
+					videoSprite.y = 120; 
 				} 
 				else if (type == 5) 
 				{
