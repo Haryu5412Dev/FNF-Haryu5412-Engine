@@ -1720,91 +1720,102 @@ class PlayState extends MusicBeatState
 	// ------------------- CUSTOM CODES -------------------
 
 	public function makeVideo(name:String, tag:String, cam:FlxCamera, ?type:Int) // type added
-	{
-		#if VIDEOS_ALLOWED
-		var filepath:String = Paths.video(name);
-		#if sys
-		if(!FileSystem.exists(filepath))
-		#else
-		if(!OpenFlAssets.exists(filepath))
-		#end
 		{
-			FlxG.log.warn('Couldnt find video file: ' + name);
+			#if VIDEOS_ALLOWED
+			var filepath:String = Paths.video(name);
+			#if sys
+			if (!FileSystem.exists(filepath))
+			#else
+			if (!OpenFlAssets.exists(filepath))
+			#end
+			{
+				FlxG.log.warn('Couldnt find video file: ' + name);
+				startAndEnd();
+				return;
+			}
+		
+			var videoBox:FlxSprite = new FlxSprite().makeGraphic(1280, 720, FlxColor.TRANSPARENT);
+			videoBox.screenCenter();
+			videoBox.cameras = [camOther];
+			add(videoBox);
+		
+			var videoSprite = new FlxVideoSprite();
+			videoSprite.play(filepath, false);
+			videoSprite.antialiasing = true;
+			videoSprite.cameras = [cam];
+			add(videoSprite);
+		
+			if (type != null)
+			{
+				if (type == 1) 
+				{
+					videoSprite.scale.set(5.0, 5.0); // 144p
+					videoSprite.x = -512; 
+					videoSprite.y = -288; 
+				} 
+				else if (type == 2) 
+				{
+					videoSprite.scale.set(3.0, 3.0); // 240p
+					videoSprite.x = -384; 
+					videoSprite.y = -216; 
+				} 
+				else if (type == 3) 
+				{
+					videoSprite.scale.set(2.0, 2.0); // 360p
+					videoSprite.x = -320; 
+					videoSprite.y = -180; 
+				} 
+				else if (type == 4) 
+				{
+					videoSprite.scale.set(1.5, 1.5); // 480p
+					videoSprite.x = -213; 
+					videoSprite.y = -120; 
+				} 
+				else if (type == 5) 
+				{
+					videoSprite.scale.set(1.0, 1.0); // 720p
+					videoSprite.x = 0; 
+					videoSprite.y = 0; 
+				} 
+				else if (type == 6) 
+				{
+					videoSprite.scale.set(0.6667, 0.6667); // 1080p
+					videoSprite.x = -320;
+					videoSprite.y = -185;
+				} 
+				else if (type == 7) 
+				{
+					videoSprite.scale.set(0.5, 0.5); // 1440p
+					videoSprite.x = -640; 
+					videoSprite.y = -360; 
+				}
+				else 
+				{
+					videoSprite.scale.set(1.0, 1.0); // 기본값
+					videoSprite.x = 0;
+					videoSprite.y = 0;
+				}
+			}
+		
+			videoSprites.set(tag, videoSprite);
+		
+			videoSprite.onEndReached = function()
+			{
+				if (videoSprite != null)
+					videoSprite.stop();
+				remove(videoSprite);
+				videoSprites.remove(tag);
+				startAndEnd();
+				return;
+			};
+			#else
+			FlxG.log.warn('Platform not supported!');
 			startAndEnd();
 			return;
+			#end
 		}
-
-		var videoBox:FlxSprite = new FlxSprite().makeGraphic(1280, 720, FlxColor.TRANSPARENT);
-		videoBox.screenCenter();
-		videoBox.cameras = [camOther];
-		add(videoBox);
-
-		var videoSprite = new FlxVideoSprite();
-		videoSprite.play(filepath, false);
-		videoSprite.antialiasing = true;
-		videoSprite.cameras = [cam];
-		add(videoSprite);
-
-		if (type != null)
-		{
-			if (type == 1) 
-			{
-				videoSprite.scale.set(5.0, 5.0); // 144p
-			} 
-			else if (type == 2) 
-			{
-				videoSprite.scale.set(3.0, 3.0); // 240p
-			} 
-			else if (type == 3) 
-			{
-				videoSprite.scale.set(2.0, 2.0); // 360p
-			} 
-			else if (type == 4) 
-			{
-				videoSprite.scale.set(1.5, 1.5); // 480p
-			} 
-			else if (type == 5) 
-			{
-				videoSprite.scale.set(1.0, 1.0); // 720p
-			} 
-			else if (type == 6) 
-			{
-				videoSprite.scale.set(0.6667, 0.6667); // 1080p
-				videoSprite.x = -320;
-				videoSprite.y = -185;
-			} 
-			else if (type == 7) 
-			{
-				videoSprite.scale.set(0.5, 0.5); // 1440p
-			}
-			else 
-			{
-				videoSprite.scale.set(1.0, 1.0);
-			}
-		}
-		if (type == null)
-			{
-				videoSprite.scale.set(1.0, 1.0);
-			}
+		
 	
-		videoSprites.set(tag, videoSprite);
-	
-		videoSprite.onEndReached = function()
-		{
-			if (videoSprite != null)
-				videoSprite.stop();
-			remove(videoSprite);
-			videoSprites.remove(tag);
-			startAndEnd();
-			return;
-		};
-		#else
-		FlxG.log.warn('Platform not supported!');
-		startAndEnd();
-		return;
-		#end
-	}
-
 	public function setPositionVideo(tag:String, x:Float, y:Float) { // setPositionVideo added
 		var videoSprite = videoSprites.get(tag); 
 		if (videoSprite != null)

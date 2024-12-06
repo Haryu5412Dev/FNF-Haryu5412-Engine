@@ -419,7 +419,7 @@ class ChartingState extends MusicBeatState
 		add(nextRenderedNotes);
 
 		songSlider = new FlxUISlider(FlxG.sound.music, 'time', 1000, 15, 0, FlxG.sound.music.length	, 250, 15, 5, FlxColor.WHITE, FlxColor.GRAY);
-		songSlider.valueLabel.visible = true;
+		songSlider.valueLabel.visible = false;
 		songSlider.minLabel.text = formatTime(0); // 시작 시간 (0초)
 		songSlider.maxLabel.text = formatTime(songLength / 1004); // 최대 시간 (노래 길이)
 		songSlider.nameLabel.text = 'Song Time';
