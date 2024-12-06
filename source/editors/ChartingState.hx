@@ -419,14 +419,13 @@ class ChartingState extends MusicBeatState
 		add(nextRenderedNotes);
 
 		songSlider = new FlxUISlider(FlxG.sound.music, 'time', 1000, 15, 0, FlxG.sound.music.length	, 250, 15, 5, FlxColor.WHITE, FlxColor.GRAY);
-		songSlider.valueLabel.visible = false;
+		songSlider.valueLabel.visible = true;
 		songSlider.minLabel.text = formatTime(0); // 시작 시간 (0초)
 		songSlider.maxLabel.text = formatTime(songLength / 1004); // 최대 시간 (노래 길이)
 		songSlider.nameLabel.text = 'Song Time';
 		songSlider.nameLabel.color = FlxColor.WHITE;
-		add(songSlider);
 		songSlider.scrollFactor.set();
-		songSlider.callback = function(fuck:Float)
+		add(songSlider);
 
 		if(lastSong != currentSongName) {
 			changeSection();
@@ -1592,13 +1591,10 @@ class ChartingState extends MusicBeatState
 
 	var lastConductorPos:Float;
 	var colorSine:Float = 0;
+	var songCurrent:Float = 0;
 	override function update(elapsed:Float)
 	{
 		curStep = recalculateSteps();
-
-		songSlider.callback = function(currentTime:Float) {
-			songSlider.valueLabel.text = formatTime(currentTime);
-		};
 
 		if(FlxG.sound.music.time < 0) {
 			FlxG.sound.music.pause();
@@ -1611,6 +1607,16 @@ class ChartingState extends MusicBeatState
 		}
 		Conductor.songPosition = FlxG.sound.music.time;
 		_song.song = UI_songTitle.text;
+
+		// var remainingTime:Float = FlxG.sound.music.length - FlxG.sound.music.time;
+		// var elapsedTime:Float = FlxG.sound.music.time;
+		// if (FlxG.sound.music != null) {
+		// 	songSlider.valueLabel.text = formatTime(elapsedTime / 1004);
+		// }
+
+		// var currentTime:Float = FlxG.sound.music.time;
+		// songSlider.value = currentTime;
+		// songSlider.valueLabel.text = formatTime(currentTime / 1004);
 
 		strumLineUpdateY();
 		for (i in 0...8){
