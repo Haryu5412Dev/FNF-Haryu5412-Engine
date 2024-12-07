@@ -131,6 +131,10 @@ class CoolUtil
 		Paths.music(sound, library);
 	}
 
+	public static function precacheVideo(video:String):Void {
+		Paths.video(video);
+	}
+
 	public static function browserLoad(site:String) {
 		#if linux
 		Sys.command('/usr/bin/xdg-open', [site]);
