@@ -8,6 +8,11 @@
 
 ### **For Video Sprite Lua**
 
+-- **You can precache video using this : **
+   ```lua
+   precacheVideo("videoName")
+   ```
+
   **-- DEPRECATED!! OLD VideoSprite Make Code (but sometimes can be used...?)**
 
 - ```lua
