@@ -8,10 +8,10 @@
 
 ### **For Video Sprite Lua**
 
--- **You can precache video using this :**
-   ```lua
-   precacheVideo("videoName")
-   ```
+   -- **You can precache video using this :**
+   - ```lua
+      precacheVideo("videoName")
+      ```
 
   **-- DEPRECATED!! OLD VideoSprite Make Code (but sometimes can be used...?)**
 
@@ -19,7 +19,7 @@
   makeCutSenceVideo('videoName')
   ```
 
-  **-- Play video to fill the screen. (autoplay)**
+  **-- Play video to the screen. (autoplay)**
 
 - ```lua
   makeVideo('videoName', 'videoTag', 'camHUD', 5) -- Added Type!! Read resolution types
