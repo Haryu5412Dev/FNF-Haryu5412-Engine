@@ -12,19 +12,27 @@ import openfl.display._internal.stats.DrawCallContext;
 #if flash
 import openfl.Lib;
 #end
-
 #if openfl
 import openfl.system.System;
 #end
 
-/**
-    The FPS class provides an easy-to-use monitor to display
-    the current frame rate of an OpenFL project
-**/
-#if !openfl_debug
-@:fileXml('tags="haxe,release"')
-@:noDebug
+// C++ implementation for memory usage
+#if cpp
+@:cppFileCode('
+#include <windows.h>
+#include <psapi.h>
+
+extern "C" double getMemoryUsageMB() {
+    PROCESS_MEMORY_COUNTERS_EX memInfo;
+    if (GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS*)&memInfo, sizeof(memInfo))) {
+        return memInfo.PrivateUsage / (1024.0 * 1024.0); // Private Working Set
+    }
+    return -1;
+}
+')
 #end
+
+
 class FPS extends TextField
 {
     public static var fpsText:TextField;
@@ -65,19 +73,19 @@ class FPS extends TextField
     }
 
     public static function createFPSText() {
-            fpsText = new TextField();
-            fpsText.defaultTextFormat = new TextFormat("VCR OSD Mono", 15, 0xFFFFFFFF);
-            fpsText.text = " ";
-            fpsText.x = 5;
-            fpsText.y = 5;
-            fpsText.width = 200;
-            fpsText.height = 50; 
-            fpsText.border = false;
-            fpsText.background = false;
-            fpsText.textColor = 0xA8FFFFFF;
-            fpsText.autoSize = LEFT;
-			fpsText.alpha = 0.8;
-            Lib.current.addChild(fpsText);
+        fpsText = new TextField();
+        fpsText.defaultTextFormat = new TextFormat("VCR OSD Mono", 15, 0xFFFFFFFF);
+        fpsText.text = " ";
+        fpsText.x = 5;
+        fpsText.y = 5;
+        fpsText.width = 200;
+        fpsText.height = 50; 
+        fpsText.border = false;
+        fpsText.background = false;
+        fpsText.textColor = 0xA8FFFFFF;
+        fpsText.autoSize = LEFT;
+        fpsText.alpha = 0.8;
+        Lib.current.addChild(fpsText);
     }
 
     @:noCompletion
@@ -106,27 +114,25 @@ class FPS extends TextField
         currentFPS = Math.round((currentCount + cacheCount) / 2);
         if (currentFPS > ClientPrefs.framerate) currentFPS = ClientPrefs.framerate;
 
-        if (currentCount != cacheCount /*&& visible*/)
+        if (currentCount != cacheCount)
         {
             var maxFPS = ClientPrefs.framerate;
             var fpsString = "FPS: " + currentFPS + " / " + maxFPS;
             var memoryMegas:Float = 0;
-
-            #if openfl
-            var memoryBytes:Float = System.totalMemory;
-            var memoryMegas:Float = memoryBytes / 1048576; // 1024 * 1024
-            memoryMegas = FlxMath.roundDecimal(memoryMegas, 1);
-            
             var memoryString = "";
-            if (memoryMegas >= 1024) {
-                var memoryGigas:Float = memoryBytes / 1073741824; // 1024 * 1024 * 1024
+
+            #if cpp
+            memoryMegas = untyped __global__.getMemoryUsageMB();
+            memoryMegas = FlxMath.roundDecimal(memoryMegas, 1);
+            if (memoryMegas >= 1000) {
+                var memoryGigas:Float = memoryMegas / 1000;
                 memoryGigas = FlxMath.roundDecimal(memoryGigas, 2);
                 memoryString = "\nRAM: " + memoryGigas + " GB";
             } else {
                 memoryString = "\nRAM: " + memoryMegas + " MB";
             }
             #end
-            
+
             if (ClientPrefs.showRAM) {
                 fpsText.htmlText = "<font size='15'>" + fpsString + "</font>" + memoryString;
             } else {
@@ -149,14 +155,5 @@ class FPS extends TextField
         }
 
         cacheCount = currentCount;
-    }
-
-    public static function round(x:Float, n:Int):Float {
-        var factor = Math.pow(10, n);
-        return Math.round(x * factor) / factor;
-    }
-
-    public static function minCheck(min:Int):String {
-        return (min < 10) ? "0" + min : Std.string(min);
     }
 }
