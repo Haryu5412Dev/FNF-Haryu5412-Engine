@@ -113,10 +113,14 @@ class FPS extends TextField
             var memoryMegas:Float = 0;
 
             #if openfl
-            memoryMegas = Math.abs(FlxMath.roundDecimal(System.totalMemory / 1000000, 1));
+            var memoryBytes:Float = System.totalMemory;
+            var memoryMegas:Float = memoryBytes / 1048576; // 1024 * 1024
+            memoryMegas = FlxMath.roundDecimal(memoryMegas, 1);
+            
             var memoryString = "";
-            if (memoryMegas >= 1000) {
-                var memoryGigas:Float = Math.abs(FlxMath.roundDecimal(memoryMegas / 1000, 2));
+            if (memoryMegas >= 1024) {
+                var memoryGigas:Float = memoryBytes / 1073741824; // 1024 * 1024 * 1024
+                memoryGigas = FlxMath.roundDecimal(memoryGigas, 2);
                 memoryString = "\nRAM: " + memoryGigas + " GB";
             } else {
                 memoryString = "\nRAM: " + memoryMegas + " MB";

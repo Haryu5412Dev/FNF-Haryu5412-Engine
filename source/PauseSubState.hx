@@ -261,6 +261,7 @@ class PauseSubState extends MusicBeatSubstate
 					}
 				case "End Song":
 					close();
+					OptionsState.onPlayState = false;
 					PlayState.instance.finishSong(true);
 				case 'Toggle Botplay':
 					PlayState.instance.cpuControlled = !PlayState.instance.cpuControlled;
@@ -284,13 +285,14 @@ class PauseSubState extends MusicBeatSubstate
 					PlayState.seenCutscene = false;
 
 					WeekData.loadTheFirstEnabledMod();
-					if(PlayState.isStoryMode) {
+					if (PlayState.isStoryMode) {
 						MusicBeatState.switchState(new StoryMenuState());
 					} else {
 						MusicBeatState.switchState(new FreeplayState());
 					}
 					PlayState.cancelMusicFadeTween();
 					FlxG.sound.playMusic(Paths.music('freakyMenu'));
+					OptionsState.onPlayState = false;
 					PlayState.changedDifficulty = false;
 					PlayState.chartingMode = false;
 			}
