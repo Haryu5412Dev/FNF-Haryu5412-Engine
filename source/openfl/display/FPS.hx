@@ -16,6 +16,8 @@ import openfl.Lib;
 import openfl.system.System;
 #end
 
+import openfl.system.Capabilities;
+
 // C++ implementation for memory usage
 #if cpp
 @:cppFileCode('
@@ -120,6 +122,27 @@ class FPS extends TextField
             var fpsString = "FPS: " + currentFPS + " / " + maxFPS;
             var memoryMegas:Float = 0;
             var memoryString = "";
+            var rawOS = Capabilities.os.toLowerCase();
+            var osShort = "Unknown";
+            if (rawOS.indexOf("windows") != -1) {
+                osShort = "Windows";
+                if (rawOS.indexOf("10") != -1) osShort += " 10";
+                else if (rawOS.indexOf("11") != -1) osShort += " 11";
+                else if (rawOS.indexOf("7") != -1) osShort += " 7";
+            }
+            else if (rawOS.indexOf("mac") != -1) {
+                osShort = "macOS";
+            }
+            else if (rawOS.indexOf("linux") != -1) {
+                osShort = "Linux";
+            }
+            else if (rawOS.indexOf("android") != -1) {
+                osShort = "Android";
+            }
+            else if (rawOS.indexOf("ios") != -1) {
+                osShort = "iOS";
+            }
+            var osString = "\nOS: " + osShort;
 
             #if cpp
             memoryMegas = untyped __global__.getMemoryUsageMB();
@@ -134,9 +157,9 @@ class FPS extends TextField
             #end
 
             if (ClientPrefs.showRAM) {
-                fpsText.htmlText = "<font size='15'>" + fpsString + "</font>" + memoryString;
+                fpsText.htmlText = "<font size='15'>" + fpsString + "</font>" + memoryString + osString;
             } else {
-                fpsText.htmlText = "<font size='15'>" + fpsString + "</font>";
+                fpsText.htmlText = "<font size='15'>" + fpsString + "</font>" + osString;
             }
 
             fpsText.textColor = 0xA8FFFFFF;
