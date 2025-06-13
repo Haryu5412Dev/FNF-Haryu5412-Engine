@@ -92,6 +92,8 @@ using StringTools;
 
 class PlayState extends MusicBeatState
 {
+	public static var gpuCahchingEnabled:Bool = true;
+
 	public static var STRUM_X = 42;
 	public static var STRUM_X_MIDDLESCROLL = -278;
 
@@ -855,6 +857,41 @@ class PlayState extends MusicBeatState
 		{
 			case 'stress':
 				GameOverSubstate.characterName = 'bf-holding-gf-dead';
+		}
+
+		if (gpuCahchingEnabled) {
+			var toCache:Array<{path:String, library:Null<String>}> = [
+				{path: 'NOTE_assets', library: null},
+				{path: 'combo', library: null},
+				{path: 'sick', library: null},
+				{path: 'good', library: null},
+				{path: 'bad', library: null},
+				{path: 'shit', library: null},
+				{path: 'noteSplashes', library: null},
+				{path: 'healthBar', library: 'shared'},
+				{path: 'timeBar', library: 'shared'}
+			];
+
+			for (i in 0...10)
+				toCache.push({path: 'num$i', library: null});
+
+			if (isPixelStage) {
+				for (i in 0...10)
+					toCache.push({path: 'pixelUI/num${i}-pixel', library: 'shared'});
+
+				for (label in ['sick','good','bad','shit','combo']) {
+					toCache.push({path: 'pixelUI/${label}-pixel', library: 'shared'});
+				}
+
+				toCache.push({path: 'pixelUI/NOTE_assets', library: 'shared'});
+			}
+
+			for (asset in toCache) {
+				var graphic = Paths.returnGraphic(asset.path, asset.library);
+				if (graphic != null && FlxG.bitmap.get(graphic.key) == null) {
+					FlxG.bitmap.add(graphic);
+				}
+			}
 		}
 
 		if(isPixelStage) {

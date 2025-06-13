@@ -76,17 +76,18 @@ class FPS extends TextField
 
     public static function createFPSText() {
         fpsText = new TextField();
-        fpsText.defaultTextFormat = new TextFormat("VCR OSD Mono", 15, 0xFFFFFFFF);
+        fpsText.defaultTextFormat = new TextFormat("VCR OSD Mono", 14, 0xFFFFFFFF);
         fpsText.text = " ";
         fpsText.x = 5;
         fpsText.y = 5;
         fpsText.width = 200;
         fpsText.height = 50; 
         fpsText.border = false;
-        fpsText.background = false;
+        fpsText.background = true;
+        fpsText.backgroundColor = 0x000000;
         fpsText.textColor = 0xA8FFFFFF;
         fpsText.autoSize = LEFT;
-        fpsText.alpha = 0.8;
+        fpsText.alpha = 0.6;
         Lib.current.addChild(fpsText);
     }
 
@@ -119,7 +120,7 @@ class FPS extends TextField
         if (currentCount != cacheCount)
         {
             var maxFPS = ClientPrefs.framerate;
-            var fpsString = "FPS: " + currentFPS + " / " + maxFPS;
+            var fpsString = "FPS: " + currentFPS;
             var memoryMegas:Float = 0;
             var memoryString = "";
             var rawOS = Capabilities.os.toLowerCase();
@@ -150,16 +151,16 @@ class FPS extends TextField
             if (memoryMegas >= 1000) {
                 var memoryGigas:Float = memoryMegas / 1000;
                 memoryGigas = FlxMath.roundDecimal(memoryGigas, 2);
-                memoryString = "\nRAM: " + memoryGigas + " GB";
+                memoryString = " • RAM: " + memoryGigas + " GB";
             } else {
-                memoryString = "\nRAM: " + memoryMegas + " MB";
+                memoryString = " • RAM: " + memoryMegas + " MB";
             }
             #end
 
             if (ClientPrefs.showRAM) {
-                fpsText.htmlText = "<font size='15'>" + fpsString + "</font>" + memoryString + osString;
+                fpsText.htmlText = fpsString + memoryString + osString;
             } else {
-                fpsText.htmlText = "<font size='15'>" + fpsString + "</font>" + osString;
+                fpsText.htmlText = fpsString + osString;
             }
 
             fpsText.textColor = 0xA8FFFFFF;
