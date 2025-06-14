@@ -44,7 +44,7 @@ class DiscordClient
 		DiscordRpc.presence({
 			details: "In the Menus",
 			state: null,
-			largeImageKey: 'icon_har',
+			largeImageKey: 'haru',
 			largeImageText: "Haryu5412 Engine"
 		});
 	}
@@ -81,7 +81,7 @@ class DiscordClient
 		DiscordRpc.presence({
 			details: details,
 			state: state,
-			largeImageKey: 'icon',
+			largeImageKey: 'haru',
 			largeImageText: "Engine Ver: " + MainMenuState.harVersion,
 			smallImageKey : smallImageKey,
 			// Obtained times are in milliseconds so they are divided so Discord can use it
