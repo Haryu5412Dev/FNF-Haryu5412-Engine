@@ -27,7 +27,7 @@ import openfl.system.Capabilities;
 extern "C" double getMemoryUsageMB() {
     PROCESS_MEMORY_COUNTERS_EX memInfo;
     if (GetProcessMemoryInfo(GetCurrentProcess(), (PROCESS_MEMORY_COUNTERS*)&memInfo, sizeof(memInfo))) {
-        return memInfo.PrivateUsage / (1024.0 * 1024.0); // Private Working Set
+        return memInfo.WorkingSetSize / (1024.0 * 1024.0);
     }
     return -1;
 }
