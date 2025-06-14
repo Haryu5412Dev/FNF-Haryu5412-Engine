@@ -5339,6 +5339,8 @@ class PlayState extends MusicBeatState
 	}
 
 	override function destroy() {
+		Paths.clearStoredMemory();
+		
 		for (lua in luaArray) {
 			lua.call('onDestroy', []);
 			lua.stop();
