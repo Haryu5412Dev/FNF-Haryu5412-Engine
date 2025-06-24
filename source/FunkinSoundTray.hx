@@ -87,6 +87,10 @@ class FunkinSoundTray extends FlxSoundTray
 			{
 				visible = false;
 				active = false;
+				// Save sound preferences
+				FlxG.save.data.mute = FlxG.sound.muted;
+				FlxG.save.data.volume = FlxG.sound.volume;
+				FlxG.save.flush();
 			}
 		}
 		else if (!visible)
