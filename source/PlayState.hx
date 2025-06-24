@@ -79,6 +79,8 @@ import hxcodec.flixel.FlxVideoSprite;
 import sys.io.Process;
 import openfl.Assets;
 
+import HoldSplashEffect;
+
 using StringTools;
 
 	// outside the class
@@ -96,6 +98,9 @@ class PlayState extends MusicBeatState
 
 	public static var STRUM_X = 42;
 	public static var STRUM_X_MIDDLESCROLL = -278;
+
+	public var holdSplashEffect:HoldSplashEffect;
+	public var alphaDAD:Float = 1;
 
 	public static var ratingStuff:Array<Dynamic> = [
 		['You Suck!', 0.2], //From 0% to 19%
@@ -1122,6 +1127,8 @@ class PlayState extends MusicBeatState
 		strumLineNotes = new FlxTypedGroup<StrumNote>();
 		add(strumLineNotes);
 		add(grpNoteSplashes);
+		holdSplashEffect = new HoldSplashEffect(isPixelStage);
+		add(holdSplashEffect);
 
 		if(ClientPrefs.timeBarType == 'Song Name')
 		{
@@ -4881,8 +4888,9 @@ class PlayState extends MusicBeatState
 		return ret;
 	}
 
-	function noteMiss(daNote:Note):Void { //You didn't hit the key and let it go offscreen, also used by Hurt Notes
-		//Dupe note remove
+	function noteMiss(daNote:Note):Void { 
+		holdSplashEffect.hideSplash(daNote.noteData, false);
+
 		notes.forEachAlive(function(note:Note) {
 			if (daNote != note && daNote.mustPress && daNote.noteData == note.noteData && daNote.isSustainNote == note.isSustainNote && Math.abs(daNote.strumTime - note.strumTime) < 1) {
 				note.kill();
@@ -4973,6 +4981,13 @@ class PlayState extends MusicBeatState
 		if (Paths.formatToSongPath(SONG.song) != 'tutorial')
 			camZooming = true;
 
+		var noteIndex:Int = notes.members.indexOf(note);
+		holdSplashEffect.triggerSplash(true, noteIndex, note.noteData, note.isSustainNote);
+		if (note.isSustainNote && StringTools.endsWith(note.animation.curAnim.name, 'end'))
+			{
+				holdSplashEffect.hideSplash(note.noteData, true);
+			}
+
 		if(note.noteType == 'Hey!' && dad.animOffsets.exists('hey')) {
 			dad.playAnim('hey', true);
 			dad.specialAnim = true;
@@ -5021,112 +5036,116 @@ class PlayState extends MusicBeatState
 	}
 
 	function goodNoteHit(note:Note):Void
-	{
-		if (!note.wasGoodHit)
 		{
-			if(cpuControlled && (note.ignoreNote || note.hitCausesMiss)) return;
-
-			if (ClientPrefs.hitsoundVolume > 0 && !note.hitsoundDisabled)
+			if (!note.wasGoodHit)
 			{
-				FlxG.sound.play(Paths.sound('hitsound'), ClientPrefs.hitsoundVolume);
-			}
-
-			if(note.hitCausesMiss) {
-				noteMiss(note);
-				if(!note.noteSplashDisabled && !note.isSustainNote) {
-					spawnNoteSplashOnNote(note);
-				}
-
-				if(!note.noMissAnimation)
+				if(cpuControlled && (note.ignoreNote || note.hitCausesMiss)) return;
+		
+				if (ClientPrefs.hitsoundVolume > 0 && !note.hitsoundDisabled)
 				{
-					switch(note.noteType) {
-						case 'Hurt Note': //Hurt note
-							if(boyfriend.animation.getByName('hurt') != null) {
-								boyfriend.playAnim('hurt', true);
-								boyfriend.specialAnim = true;
-							}
+					FlxG.sound.play(Paths.sound('hitsound'), ClientPrefs.hitsoundVolume);
+				}
+		
+				if(note.hitCausesMiss) {
+					noteMiss(note);
+					if(!note.noteSplashDisabled && !note.isSustainNote) {
+						spawnNoteSplashOnNote(note);
+					}
+		
+					if(!note.noMissAnimation)
+					{
+						switch(note.noteType) {
+							case 'Hurt Note':
+								if(boyfriend.animation.getByName('hurt') != null) {
+									boyfriend.playAnim('hurt', true);
+									boyfriend.specialAnim = true;
+								}
+						}
+					}
+		
+					note.wasGoodHit = true;
+					if (!note.isSustainNote)
+					{
+						note.kill();
+						notes.remove(note, true);
+						note.destroy();
+					}
+					return;
+				}
+		
+				if (!note.isSustainNote)
+				{
+					combo += 1;
+					if(combo > 9999) combo = 9999;
+					popUpScore(note);
+				}
+				health += note.hitHealth * healthGain;
+		
+				if(!note.noAnimation) {
+					var animToPlay:String = singAnimations[Std.int(Math.abs(note.noteData))];
+		
+					if(note.gfNote)
+					{
+						if(gf != null)
+						{
+							gf.playAnim(animToPlay + note.animSuffix, true);
+							gf.holdTimer = 0;
+						}
+					}
+					else
+					{
+						boyfriend.playAnim(animToPlay + note.animSuffix, true);
+						boyfriend.holdTimer = 0;
+					}
+		
+					if(note.noteType == 'Hey!') {
+						if(boyfriend.animOffsets.exists('hey')) {
+							boyfriend.playAnim('hey', true);
+							boyfriend.specialAnim = true;
+							boyfriend.heyTimer = 0.6;
+						}
+		
+						if(gf != null && gf.animOffsets.exists('cheer')) {
+							gf.playAnim('cheer', true);
+							gf.specialAnim = true;
+							gf.heyTimer = 0.6;
+						}
 					}
 				}
-
+		
+				if(cpuControlled) {
+					var time:Float = 0.15;
+					if(note.isSustainNote && !note.animation.curAnim.name.endsWith('end')) {
+						time += 0.15;
+					}
+					StrumPlayAnim(false, Std.int(Math.abs(note.noteData)), time);
+				} else {
+					var spr = playerStrums.members[note.noteData];
+					if(spr != null)
+					{
+						spr.playAnim('confirm', true);
+					}
+				}
+		
+				var noteIndex:Int = notes.members.indexOf(note);
+				holdSplashEffect.triggerSplash(false, noteIndex, note.noteData, note.isSustainNote);
+		
 				note.wasGoodHit = true;
+				vocals.volume = 1;
+		
+				var isSus:Bool = note.isSustainNote;
+				var leData:Int = Math.round(Math.abs(note.noteData));
+				var leType:String = note.noteType;
+				callOnLuas('goodNoteHit', [notes.members.indexOf(note), leData, leType, isSus]);
+		
 				if (!note.isSustainNote)
 				{
 					note.kill();
 					notes.remove(note, true);
 					note.destroy();
 				}
-				return;
-			}
-
-			if (!note.isSustainNote)
-			{
-				combo += 1;
-				if(combo > 9999) combo = 9999;
-				popUpScore(note);
-			}
-			health += note.hitHealth * healthGain;
-
-			if(!note.noAnimation) {
-				var animToPlay:String = singAnimations[Std.int(Math.abs(note.noteData))];
-
-				if(note.gfNote)
-				{
-					if(gf != null)
-					{
-						gf.playAnim(animToPlay + note.animSuffix, true);
-						gf.holdTimer = 0;
-					}
-				}
-				else
-				{
-					boyfriend.playAnim(animToPlay + note.animSuffix, true);
-					boyfriend.holdTimer = 0;
-				}
-
-				if(note.noteType == 'Hey!') {
-					if(boyfriend.animOffsets.exists('hey')) {
-						boyfriend.playAnim('hey', true);
-						boyfriend.specialAnim = true;
-						boyfriend.heyTimer = 0.6;
-					}
-
-					if(gf != null && gf.animOffsets.exists('cheer')) {
-						gf.playAnim('cheer', true);
-						gf.specialAnim = true;
-						gf.heyTimer = 0.6;
-					}
-				}
-			}
-
-			if(cpuControlled) {
-				var time:Float = 0.15;
-				if(note.isSustainNote && !note.animation.curAnim.name.endsWith('end')) {
-					time += 0.15;
-				}
-				StrumPlayAnim(false, Std.int(Math.abs(note.noteData)), time);
-			} else {
-				var spr = playerStrums.members[note.noteData];
-				if(spr != null)
-				{
-					spr.playAnim('confirm', true);
-				}
-			}
-			note.wasGoodHit = true;
-			vocals.volume = 1;
-
-			var isSus:Bool = note.isSustainNote; //GET OUT OF MY HEAD, GET OUT OF MY HEAD, GET OUT OF MY HEAD
-			var leData:Int = Math.round(Math.abs(note.noteData));
-			var leType:String = note.noteType;
-			callOnLuas('goodNoteHit', [notes.members.indexOf(note), leData, leType, isSus]);
-
-			if (!note.isSustainNote)
-			{
-				note.kill();
-				notes.remove(note, true);
-				note.destroy();
 			}
 		}
-	}
 
 	public function spawnNoteSplashOnNote(note:Note) {
 		if(ClientPrefs.noteSplashes && note != null) {
