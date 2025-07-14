@@ -39,6 +39,7 @@ class ClientPrefs
 	public static var comboStacking = true;
 	public static var comboCamSet:String = 'camHUD'; // custom
 	public static var pauseStatePreferDebug = false;
+	public static var noteHoldSplashes:Bool = true;
 	public static var gameplaySettings:Map<String, Dynamic> = [
 		'scrollspeed' => 1.0,
 		'scrolltype' => 'multiplicative',
@@ -139,6 +140,7 @@ class ClientPrefs
 		FlxG.save.data.comboStacking = comboStacking;
 		FlxG.save.data.comboCamSet = comboCamSet;
 		FlxG.save.data.pauseStatePreferDebug = pauseStatePreferDebug;
+		FlxG.save.data.noteHoldSplashes = noteHoldSplashes;
 
 		FlxG.save.flush();
 
@@ -151,6 +153,10 @@ class ClientPrefs
 
 	public static function loadPrefs()
 	{
+		if (FlxG.save.data.noteHoldSplashes != null)
+		{
+			noteHoldSplashes = FlxG.save.data.noteHoldSplashes;
+		}
 		if (FlxG.save.data.pauseStatePreferDebug != null)
 		{
 			pauseStatePreferDebug = FlxG.save.data.pauseStatePreferDebug;

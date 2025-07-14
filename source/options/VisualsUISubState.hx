@@ -32,13 +32,20 @@ class VisualsUISubState extends BaseOptionsMenu
 	public function new()
 	{
 		title = 'Visuals and UI';
-		rpcTitle = 'Visuals & UI Settings Menu'; //for Discord Rich Presence
+		rpcTitle = 'Visuals & UI Settings Menu'; // For Discord Rich Presence
 
 		var option:Option = new Option('Note Splashes',
 			"If unchecked, hitting \"Sick!\" notes won't show particles.",
 			'noteSplashes',
 			'bool',
 			true);
+		addOption(option);
+
+		var option:Option = new Option('Note Hold Splashes',
+		"If unchecked, hitting long notes won't show hold splashes.",
+		'noteHoldSplashes',
+		'bool',
+		true);
 		addOption(option);
 
 		var option:Option = new Option('Hide HUD',

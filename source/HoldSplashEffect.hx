@@ -59,6 +59,13 @@ class HoldSplashEffect extends FlxGroup {
             cs.brightness = note.noteSplashBrt;
         }
 
+        // for angle? ig
+        if (note != null) {
+            splash.angle = note.angle;
+        } else {
+            splash.angle = 0;
+        }
+
         if (isOpponent) {
             if (ClientPrefs.middleScroll) {
                 splash.x = strum.x + [-50, -50, 50, 50][noteData];
@@ -114,7 +121,9 @@ class HoldSplashEffect extends FlxGroup {
             cs.brightness = brt;
         }
     
-        splash.animation.play('hold', true);
+        if (splash.animation.curAnim == null || splash.animation.curAnim.name != 'hold') {
+            splash.animation.play('hold', true);
+        }
         splash.visible = true;
 
         // if (holdSplashColorMap.exists(splash)) {
@@ -165,6 +174,14 @@ class HoldSplashEffect extends FlxGroup {
                         if (linkedNote != null) {
                             var baseAlpha = PlayState.instance.strumLineNotes.members[0].alpha;
                             splash.alpha = baseAlpha;
+                        }
+                    }
+
+                    if (splashNoteMap.exists(splash)) {
+                        var linkedNote = splashNoteMap.get(splash);
+                        if (linkedNote != null) {
+                            splash.angle = linkedNote.angle;
+                            splash.alpha = PlayState.instance.strumLineNotes.members[0].alpha;
                         }
                     }
 

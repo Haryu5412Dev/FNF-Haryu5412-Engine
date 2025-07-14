@@ -4982,15 +4982,18 @@ class PlayState extends MusicBeatState
 		if (Paths.formatToSongPath(SONG.song) != 'tutorial')
 			camZooming = true;
 
-		var noteIndex:Int = notes.members.indexOf(note);
-		holdSplashEffect.triggerSplash(true, noteIndex, note.noteData, note.isSustainNote);
-		if (note.isSustainNote && StringTools.endsWith(note.animation.curAnim.name, 'end'))
+		if (ClientPrefs.noteHoldSplashes) 
 		{
-			holdSplashEffect.hideSplash(note.noteData, true);
-		}
-		else if (note.alpha == 0)
-		{
-			holdSplashEffect.hideSplash(note.noteData, true);
+			var noteIndex:Int = notes.members.indexOf(note);
+			holdSplashEffect.triggerSplash(true, noteIndex, note.noteData, note.isSustainNote);
+			if (note.isSustainNote && StringTools.endsWith(note.animation.curAnim.name, 'end'))
+			{
+				holdSplashEffect.hideSplash(note.noteData, true);
+			}
+			else if (note.alpha == 0)
+			{
+				holdSplashEffect.hideSplash(note.noteData, true);
+			}
 		}
 
 		if(note.noteType == 'Hey!' && dad.animOffsets.exists('hey')) {
@@ -5134,15 +5137,18 @@ class PlayState extends MusicBeatState
 		
 				note.wasGoodHit = true;
 
-				var noteIndex:Int = notes.members.indexOf(note);
-				holdSplashEffect.triggerSplash(false, noteIndex, note.noteData, note.isSustainNote);
-				if (note.isSustainNote && StringTools.endsWith(note.animation.curAnim.name, 'end'))
+				if (ClientPrefs.noteHoldSplashes)
 				{
-					holdSplashEffect.hideSplash(note.noteData, false);
-				}
-				else if (note.alpha == 0)
-				{
-					holdSplashEffect.hideSplash(note.noteData, false);
+					var noteIndex:Int = notes.members.indexOf(note);
+					holdSplashEffect.triggerSplash(false, noteIndex, note.noteData, note.isSustainNote);
+					if (note.isSustainNote && StringTools.endsWith(note.animation.curAnim.name, 'end'))
+					{
+						holdSplashEffect.hideSplash(note.noteData, false);
+					}
+					else if (note.alpha == 0)
+					{
+						holdSplashEffect.hideSplash(note.noteData, false);
+					}
 				}
 				
 				vocals.volume = 1;
