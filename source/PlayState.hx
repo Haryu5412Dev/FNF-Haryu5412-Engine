@@ -1127,8 +1127,6 @@ class PlayState extends MusicBeatState
 		strumLineNotes = new FlxTypedGroup<StrumNote>();
 		add(strumLineNotes);
 		add(grpNoteSplashes);
-		holdSplashEffect = new HoldSplashEffect(isPixelStage);
-		add(holdSplashEffect);
 
 		if(ClientPrefs.timeBarType == 'Song Name')
 		{
@@ -2767,6 +2765,9 @@ class PlayState extends MusicBeatState
 
 		notes = new FlxTypedGroup<Note>();
 		add(notes);
+
+		holdSplashEffect = new HoldSplashEffect(isPixelStage);
+		add(holdSplashEffect);
 
 		var noteData:Array<SwagSection>;
 
@@ -4984,9 +4985,13 @@ class PlayState extends MusicBeatState
 		var noteIndex:Int = notes.members.indexOf(note);
 		holdSplashEffect.triggerSplash(true, noteIndex, note.noteData, note.isSustainNote);
 		if (note.isSustainNote && StringTools.endsWith(note.animation.curAnim.name, 'end'))
-			{
-				holdSplashEffect.hideSplash(note.noteData, true);
-			}
+		{
+			holdSplashEffect.hideSplash(note.noteData, true);
+		}
+		else if (note.alpha == 0)
+		{
+			holdSplashEffect.hideSplash(note.noteData, true);
+		}
 
 		if(note.noteType == 'Hey!' && dad.animOffsets.exists('hey')) {
 			dad.playAnim('hey', true);
@@ -5127,10 +5132,19 @@ class PlayState extends MusicBeatState
 					}
 				}
 		
+				note.wasGoodHit = true;
+
 				var noteIndex:Int = notes.members.indexOf(note);
 				holdSplashEffect.triggerSplash(false, noteIndex, note.noteData, note.isSustainNote);
-		
-				note.wasGoodHit = true;
+				if (note.isSustainNote && StringTools.endsWith(note.animation.curAnim.name, 'end'))
+				{
+					holdSplashEffect.hideSplash(note.noteData, false);
+				}
+				else if (note.alpha == 0)
+				{
+					holdSplashEffect.hideSplash(note.noteData, false);
+				}
+				
 				vocals.volume = 1;
 		
 				var isSus:Bool = note.isSustainNote;

@@ -1,5 +1,3 @@
-// HoldSplashEffect.hx
-
 package;
 
 import flixel.FlxSprite;
@@ -7,9 +5,12 @@ import flixel.group.FlxGroup;
 import Note;
 import StringTools;
 import Paths;
+import ColorSwap;
 
 class HoldSplashEffect extends FlxGroup {
     public var holdSplashMap:Map<String, FlxSprite> = new Map();
+    public var holdSplashColorMap:Map<FlxSprite, ColorSwap> = new Map();
+    public var splashNoteMap:Map<FlxSprite, Note> = new Map();
     public var colors:Array<String> = ['Purple', 'Blue', 'Green', 'Red'];
     public var alphaBF:Float = 1;
     public var alphaDAD:Float = 1;
@@ -38,6 +39,11 @@ class HoldSplashEffect extends FlxGroup {
         splash.scrollFactor.set(0, 0);
         splash.animation.play('hold', true);
         holdSplashMap.set(id, splash);
+
+        var colorSwap = new ColorSwap();
+        splash.shader = colorSwap.shader;
+        holdSplashColorMap.set(splash, colorSwap);
+
         return splash;
     }
 
@@ -45,7 +51,14 @@ class HoldSplashEffect extends FlxGroup {
         return isOpponent ? noteData : noteData + 4;
     }
 
-    function setSplashPosition(splash:FlxSprite, strum:FlxSprite, isOpponent:Bool, noteData:Int):Void {
+    function setSplashPosition(splash:FlxSprite, strum:FlxSprite, isOpponent:Bool, noteData:Int, hueColor:Float = 0, satColor:Float = 0, brtColor:Float = 0, ?note:Note = null):Void {
+        if (note != null && Std.isOfType(splash.shader, ColorSwap)) {
+            var cs:ColorSwap = cast(splash.shader, ColorSwap);
+            cs.hue = note.noteSplashHue;
+            cs.saturation = note.noteSplashSat;
+            cs.brightness = note.noteSplashBrt;
+        }
+
         if (isOpponent) {
             if (ClientPrefs.middleScroll) {
                 splash.x = strum.x + [-50, -50, 50, 50][noteData];
@@ -53,56 +66,83 @@ class HoldSplashEffect extends FlxGroup {
                 splash.x = strum.x - 105;
             }
             var baseAlpha = PlayState.instance.strumLineNotes.members[0].alpha;
-            splash.alpha = (baseAlpha <= 0.01) ? 1 : baseAlpha;
+            splash.alpha = baseAlpha;
         } else {
             splash.x = strum.x - 105;
         }
-    
+
         splash.y = strum.y - 100;
     }
 
     public function triggerSplash(isOpponent:Bool, noteIndex:Int, noteData:Int, isSustain:Bool):Void {
         if (!isSustain) return;
-
+    
         var color = colors[noteData];
         var id = 'hold' + color + (isOpponent ? 'DAD' : 'BF');
         var splash = holdSplashMap.get(id);
         if (splash == null) return;
-
+    
         var strumIndex = getStrumIndex(isOpponent, noteData);
-
+        var note = PlayState.instance.notes.members[noteIndex];
+    
         if (PlayState.instance.strumLineNotes.members.length > strumIndex) {
             var strum = PlayState.instance.strumLineNotes.members[strumIndex];
             if (strum != null) {
-                setSplashPosition(splash, strum, isOpponent, noteData);
+                setSplashPosition(splash, strum, isOpponent, noteData, 0, 0, 0, note);
             }
         }
-
-        splash.alpha = isOpponent ? alphaDAD : alphaBF;
+    
+        if (note != null) splashNoteMap.set(splash, note);
+    
+        var hue:Float = 0;
+        var sat:Float = 0;
+        var brt:Float = 0;
+        if (note != null) {
+            hue = note.noteSplashHue;
+            sat = note.noteSplashSat;
+            brt = note.noteSplashBrt;
+        } else if (noteData > -1 && noteData < ClientPrefs.arrowHSV.length) {
+            hue = ClientPrefs.arrowHSV[noteData][0] / 360;
+            sat = ClientPrefs.arrowHSV[noteData][1] / 100;
+            brt = ClientPrefs.arrowHSV[noteData][2] / 100;
+        }
+    
+        if (holdSplashColorMap.exists(splash)) {
+            var cs = holdSplashColorMap.get(splash);
+            cs.hue = hue;
+            cs.saturation = sat;
+            cs.brightness = brt;
+        }
+    
+        splash.animation.play('hold', true);
         splash.visible = true;
 
-        var note = PlayState.instance.notes.members[noteIndex];
-        var animName = (note != null && StringTools.endsWith(note.animation.curAnim.name, 'end')) ? 'end' : 'hold';
-        if (splash.animation.curAnim == null || splash.animation.curAnim.name != animName) {
-            splash.animation.play(animName, true);
+        // if (holdSplashColorMap.exists(splash)) {
+        //     var cs = holdSplashColorMap.get(splash);
+        //     cs.hue = hue;
+        //     cs.saturation = sat;
+        //     cs.brightness = brt;
+        //     trace('ColorSwap set: hue=$hue, sat=$sat, brt=$brt');
+        //     trace('Shader uTime: ' + cs.shader.uTime.value);
+        // }
+    }
+    
+
+    public function hideSplash(noteData:Int, isOpponent:Bool):Void {
+        var color = colors[noteData];
+        var id = 'hold' + color + (isOpponent ? 'DAD' : 'BF');
+        var splash = holdSplashMap.get(id);
+
+        if (splash == null) return;
+
+        if (isOpponent) {
+            splash.visible = false;
+            splash.animation.play('hold', true);
+            splashNoteMap.remove(splash);
+        } else {
+            splash.animation.play('end', true);
         }
     }
-
-    public function hideSplash(noteData:Int, isOpponent:Bool):Void
-        {
-            var color = colors[noteData];
-            var id = 'hold' + color + (isOpponent ? 'DAD' : 'BF');
-            var splash = holdSplashMap.get(id);
-        
-            if (splash == null) return;
-        
-            if (isOpponent) {
-                splash.visible = false;
-                splash.animation.play('hold', true);
-            } else {
-                splash.animation.play('end', true);
-            }
-        }
 
     override public function update(elapsed:Float):Void {
         super.update(elapsed);
@@ -120,9 +160,18 @@ class HoldSplashEffect extends FlxGroup {
                         setSplashPosition(splash, strum, isOpponent, i);
                     }
 
+                    if (splashNoteMap.exists(splash)) {
+                        var linkedNote = splashNoteMap.get(splash);
+                        if (linkedNote != null) {
+                            var baseAlpha = PlayState.instance.strumLineNotes.members[0].alpha;
+                            splash.alpha = baseAlpha;
+                        }
+                    }
+
                     if (splash.animation.curAnim.name == 'end' && splash.animation.finished) {
                         splash.visible = false;
                         splash.animation.play('hold', true);
+                        splashNoteMap.remove(splash);
                     }
                 }
             }
