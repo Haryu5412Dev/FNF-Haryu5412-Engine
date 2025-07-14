@@ -41,9 +41,14 @@ class NotesSubState extends MusicBeatSubstate
 	var blackBG:FlxSprite;
 	var hsbText:Alphabet;
 
+	var inputBuffer:String = "";
+	var inputActive:Bool = false;
+
 	var posX = 230;
 	public function new() {
 		super();
+
+		FlxG.sound.muteKeys = [];
 		
 		var bg:FlxSprite = new FlxSprite().loadGraphic(Paths.image('menuDesat'));
 		bg.color = 0xFFea71fd;
@@ -88,11 +93,58 @@ class NotesSubState extends MusicBeatSubstate
 		hsbText.scaleY = 0.6;
 		add(hsbText);
 
+		var versionShit:FlxText = new FlxText(24, FlxG.height - 44, 0, "R to Reset Values", 24);
+		versionShit.scrollFactor.set();
+		versionShit.setFormat("VCR OSD Mono", 24, FlxColor.WHITE, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+		// versionShit.background = true;
+        // versionShit.backgroundColor = 0x000000;
+		// versionShit.alpha = 0.6;
+		add(versionShit);
+
 		changeSelection();
 	}
 
 	var changingNote:Bool = false;
 	override function update(elapsed:Float) {
+		if (inputActive) {
+			if (FlxG.keys.justPressed.ZERO) { inputBuffer += "0"; updateBufferDisplay(); }
+			if (FlxG.keys.justPressed.ONE) { inputBuffer += "1"; updateBufferDisplay(); }
+			if (FlxG.keys.justPressed.TWO) { inputBuffer += "2"; updateBufferDisplay(); }
+			if (FlxG.keys.justPressed.THREE) { inputBuffer += "3"; updateBufferDisplay(); }
+			if (FlxG.keys.justPressed.FOUR) { inputBuffer += "4"; updateBufferDisplay(); }
+			if (FlxG.keys.justPressed.FIVE) { inputBuffer += "5"; updateBufferDisplay(); }
+			if (FlxG.keys.justPressed.SIX) { inputBuffer += "6"; updateBufferDisplay(); }
+			if (FlxG.keys.justPressed.SEVEN) { inputBuffer += "7"; updateBufferDisplay(); }
+			if (FlxG.keys.justPressed.EIGHT) { inputBuffer += "8"; updateBufferDisplay(); }
+			if (FlxG.keys.justPressed.NINE) { inputBuffer += "9"; updateBufferDisplay(); }
+			if (FlxG.keys.justPressed.MINUS && inputBuffer.indexOf("-") == -1) {
+				inputBuffer = "-" + inputBuffer;
+				updateBufferDisplay();
+			}
+			if (FlxG.keys.justPressed.BACKSPACE) {
+				inputBuffer = inputBuffer.substr(0, inputBuffer.length - 1);
+				updateBufferDisplay();
+			}
+		
+			if (FlxG.keys.justPressed.ENTER || controls.ACCEPT) {
+				if (inputBuffer.length > 0) {
+					var parsed = Std.parseFloat(inputBuffer);
+					var max:Float = 180;
+					if (typeSelected == 1 || typeSelected == 2)
+						max = 100;
+		
+					if (parsed > max) parsed = max;
+					if (parsed < -max) parsed = -max;
+		
+					curValue = parsed;
+					updateValue(0);
+					inputBuffer = "";
+					inputActive = false;
+					FlxG.sound.play(Paths.sound('confirmMenu'));
+				}
+			}
+			return;
+		}
 		if(changingNote) {
 			if(holdTime < 0.5) {
 				if(controls.UI_LEFT_P) {
@@ -148,10 +200,14 @@ class NotesSubState extends MusicBeatSubstate
 				}
 				FlxG.sound.play(Paths.sound('scrollMenu'));
 			}
-			if (controls.ACCEPT && nextAccept <= 0) {
+			if (controls.ACCEPT && nextAccept <= 0 && !inputActive) {
 				FlxG.sound.play(Paths.sound('scrollMenu'));
 				changingNote = true;
 				holdTime = 0;
+
+				inputActive = true;
+				inputBuffer = "";
+				updateBufferDisplay();
 				for (i in 0...grpNumbers.length) {
 					var item = grpNumbers.members[i];
 					item.alpha = 0;
@@ -285,6 +341,19 @@ class NotesSubState extends MusicBeatSubstate
 		{
 			letter.offset.x += add;
 			if(roundedValue < 0) letter.offset.x += 10;
+		}
+	}
+
+	function updateBufferDisplay() {
+		var previewValue = inputBuffer;
+		if (previewValue == "") previewValue = "0";
+	
+		var item = grpNumbers.members[(curSelected * 3) + typeSelected];
+		item.text = previewValue;
+	
+		var add = (40 * (item.letters.length - 1)) / 2;
+		for (letter in item.letters) {
+			letter.offset.x += add;
 		}
 	}
 }
