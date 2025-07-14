@@ -202,12 +202,16 @@ class FlxRuntimeShader extends FlxShader
 
 		if (fragmentSource == null)
 		{
+			#if DEBUG
 			trace('Loading default fragment source...');
+			#end
 			glFragmentSource = processFragmentSource(DEFAULT_FRAGMENT_SOURCE);
 		}
 		else
 		{
+			#if DEBUG
 			trace('Loading fragment source from argument...');
+			#end
 			glFragmentSource = processFragmentSource(fragmentSource);
 		}
 

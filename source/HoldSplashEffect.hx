@@ -72,8 +72,11 @@ class HoldSplashEffect extends FlxGroup {
             } else {
                 splash.x = strum.x - 105;
             }
-            var baseAlpha = PlayState.instance.strumLineNotes.members[0].alpha;
-            splash.alpha = baseAlpha;
+            var strumIndex = getStrumIndex(isOpponent, noteData);
+            if (PlayState.instance.strumLineNotes.members.length > strumIndex) {
+                var baseAlpha = PlayState.instance.strumLineNotes.members[strumIndex].alpha;
+                splash.alpha = baseAlpha;
+            }
         } else {
             splash.x = strum.x - 105;
         }
@@ -172,16 +175,8 @@ class HoldSplashEffect extends FlxGroup {
                     if (splashNoteMap.exists(splash)) {
                         var linkedNote = splashNoteMap.get(splash);
                         if (linkedNote != null) {
-                            var baseAlpha = PlayState.instance.strumLineNotes.members[0].alpha;
-                            splash.alpha = baseAlpha;
-                        }
-                    }
-
-                    if (splashNoteMap.exists(splash)) {
-                        var linkedNote = splashNoteMap.get(splash);
-                        if (linkedNote != null) {
                             splash.angle = linkedNote.angle;
-                            splash.alpha = PlayState.instance.strumLineNotes.members[0].alpha;
+                            splash.alpha = strum != null ? strum.alpha : 1;
                         }
                     }
 
