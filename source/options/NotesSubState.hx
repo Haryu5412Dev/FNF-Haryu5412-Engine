@@ -48,7 +48,7 @@ class NotesSubState extends MusicBeatSubstate
 	public function new() {
 		super();
 
-		FlxG.sound.muteKeys = [];
+		// FlxG.sound.muteKeys = [];
 		
 		var bg:FlxSprite = new FlxSprite().loadGraphic(Paths.image('menuDesat'));
 		bg.color = 0xFFea71fd;
@@ -93,13 +93,19 @@ class NotesSubState extends MusicBeatSubstate
 		hsbText.scaleY = 0.6;
 		add(hsbText);
 
-		var versionShit:FlxText = new FlxText(24, FlxG.height - 44, 0, "R to Reset Values", 24);
+		var versionShit:FlxText = new FlxText(12, FlxG.height - 60, 0, "R to Reset Values", 24);
 		versionShit.scrollFactor.set();
 		versionShit.setFormat("VCR OSD Mono", 24, FlxColor.WHITE, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
-		// versionShit.background = true;
-        // versionShit.backgroundColor = 0x000000;
-		// versionShit.alpha = 0.6;
+		versionShit.antialiasing = ClientPrefs.globalAntialiasing;
+		versionShit.borderSize = 1.5;
 		add(versionShit);
+
+		var versionShit2:FlxText = new FlxText(12, FlxG.height - 30, 0, "N to Number Input Mode", 24);
+		versionShit2.scrollFactor.set();
+		versionShit2.setFormat("VCR OSD Mono", 24, FlxColor.WHITE, LEFT, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
+		versionShit2.antialiasing = ClientPrefs.globalAntialiasing;
+		versionShit2.borderSize = 1.5;
+		add(versionShit2);
 
 		changeSelection();
 	}
@@ -143,6 +149,12 @@ class NotesSubState extends MusicBeatSubstate
 					FlxG.sound.play(Paths.sound('confirmMenu'));
 				}
 			}
+			return;
+		}
+		if (changingNote && FlxG.keys.justPressed.N) {
+			inputActive = true;
+			inputBuffer = "";
+			updateBufferDisplay();
 			return;
 		}
 		if(changingNote) {
@@ -205,9 +217,6 @@ class NotesSubState extends MusicBeatSubstate
 				changingNote = true;
 				holdTime = 0;
 
-				inputActive = true;
-				inputBuffer = "";
-				updateBufferDisplay();
 				for (i in 0...grpNumbers.length) {
 					var item = grpNumbers.members[i];
 					item.alpha = 0;
