@@ -355,6 +355,9 @@ class PlayState extends MusicBeatState
 		//trace('Playback Rate: ' + playbackRate);
 		Paths.clearStoredMemory();
 
+		// Apply GPU caching preference for this session
+		gpuCahchingEnabled = ClientPrefs.gpuPrecache;
+
 		// for lua
 		instance = this;
 
@@ -944,7 +947,7 @@ class PlayState extends MusicBeatState
 		{
 			if(FileSystem.exists(folder))
 			{
-				for (file in FileSystem.readDirectory(folder))
+				for (file in Paths.cachedReadDirectory(folder))
 				{
 					if(file.endsWith('.lua') && !filesPushed.contains(file))
 					{
@@ -1317,7 +1320,7 @@ class PlayState extends MusicBeatState
 		{
 			if(FileSystem.exists(folder))
 			{
-				for (file in FileSystem.readDirectory(folder))
+				for (file in Paths.cachedReadDirectory(folder))
 				{
 					if(file.endsWith('.lua') && !filesPushed.contains(file))
 					{
@@ -5379,6 +5382,10 @@ class PlayState extends MusicBeatState
 
 	override function destroy() {
 		Paths.clearStoredMemory();
+		if (ClientPrefs.aggressiveMemory) {
+			Paths.clearUnusedMemory();
+			Song.clearParsedCache();
+		}
 		
 		for (lua in luaArray) {
 			lua.call('onDestroy', []);

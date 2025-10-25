@@ -86,8 +86,17 @@ class Song
 		this.bpm = bpm;
 	}
 
+	static var _parsedCache:Map<String, SwagSong> = new Map();
+	public static function clearParsedCache():Void {
+		_parsedCache = new Map();
+	}
+
 	public static function loadFromJson(jsonInput:String, ?folder:String):SwagSong
 	{
+		var key = Paths.formatToSongPath(folder) + '/' + Paths.formatToSongPath(jsonInput);
+		var cached = _parsedCache.get(key);
+		if (cached != null) return cached;
+
 		var rawJson = null;
 		
 		var formattedFolder:String = Paths.formatToSongPath(folder);
@@ -100,11 +109,8 @@ class Song
 		#end
 
 		if(rawJson == null) {
-			#if sys
-			rawJson = File.getContent(Paths.json(formattedFolder + '/' + formattedSong)).trim();
-			#else
-			rawJson = Assets.getText(Paths.json(formattedFolder + '/' + formattedSong)).trim();
-			#end
+			// Use Paths.getTextFromFile for caching and mod-aware resolution
+			rawJson = Paths.getTextFromFile('data/' + formattedFolder + '/' + formattedSong + '.json').trim();
 		}
 
 		while (!rawJson.endsWith("}"))
@@ -132,6 +138,7 @@ class Song
 		var songJson:Dynamic = parseJSONshit(rawJson);
 		if(jsonInput != 'events') StageData.loadDirectory(songJson);
 		onLoadJson(songJson);
+		_parsedCache.set(key, songJson);
 		return songJson;
 	}
 

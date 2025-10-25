@@ -5,6 +5,10 @@ import flixel.util.FlxSave;
 import flixel.input.keyboard.FlxKey;
 import flixel.graphics.FlxGraphic;
 import Controls;
+import Paths;
+#if sys
+import util.ThreadPool;
+#end
 
 class ClientPrefs
 {
@@ -20,6 +24,17 @@ class ClientPrefs
 	public static var lowQuality:Bool = false;
 	public static var shaders:Bool = true;
 	public static var framerate:Int = 63;
+	// Performance preferences
+	// 0 means Auto (we'll pick a sensible default based on platform/CPU)
+	public static var workerThreads:Int = 0;
+	// If true, clears more caches when switching states to reduce memory footprint
+	public static var aggressiveMemory:Bool = false;
+	// Size of the text cache (KB) used for JSON/Lua/mod text files. 0 disables.
+	public static var textCacheKB:Int = 1024;
+	// Cache directory listings for mods/* to speed up script discovery
+	public static var modsDirCache:Bool = true;
+	// Keep frequently used graphics persisted in GPU/bitmap cache for faster renders
+	public static var gpuPrecache:Bool = true;
 	public static var cursing:Bool = true;
 	public static var violence:Bool = true;
 	public static var camZooms:Bool = true;
@@ -111,6 +126,11 @@ class ClientPrefs
 		FlxG.save.data.lowQuality = lowQuality;
 		FlxG.save.data.shaders = shaders;
 		FlxG.save.data.framerate = framerate;
+		FlxG.save.data.workerThreads = workerThreads;
+		FlxG.save.data.aggressiveMemory = aggressiveMemory;
+		FlxG.save.data.textCacheKB = textCacheKB;
+		FlxG.save.data.modsDirCache = modsDirCache;
+		FlxG.save.data.gpuPrecache = gpuPrecache;
 		// FlxG.save.data.cursing = cursing;
 		// FlxG.save.data.violence = violence;
 		FlxG.save.data.camZooms = camZooms;
@@ -212,6 +232,26 @@ class ClientPrefs
 		if (FlxG.save.data.shaders != null)
 		{
 			shaders = FlxG.save.data.shaders;
+		}
+		if (FlxG.save.data.workerThreads != null)
+		{
+			workerThreads = FlxG.save.data.workerThreads;
+		}
+		if (FlxG.save.data.aggressiveMemory != null)
+		{
+			aggressiveMemory = FlxG.save.data.aggressiveMemory;
+		}
+		if (FlxG.save.data.textCacheKB != null)
+		{
+			textCacheKB = FlxG.save.data.textCacheKB;
+		}
+		if (FlxG.save.data.modsDirCache != null)
+		{
+			modsDirCache = FlxG.save.data.modsDirCache;
+		}
+		if (FlxG.save.data.gpuPrecache != null)
+		{
+			gpuPrecache = FlxG.save.data.gpuPrecache;
 		}
 		if(FlxG.save.data.framerate != null) {
 			framerate = FlxG.save.data.framerate;
@@ -342,6 +382,9 @@ class ClientPrefs
 			}
 			reloadControls();
 		}
+
+		// Apply runtime tuning knobs after all prefs are loaded
+		applyRuntimeTuning();
 	}
 
 	inline public static function getGameplaySetting(name:String, defaultValue:Dynamic):Dynamic
@@ -378,5 +421,19 @@ class ClientPrefs
 			len = copiedArray.length;
 		}
 		return copiedArray;
+	}
+
+	// Apply runtime configuration to subsystems that expose tuning knobs.
+	static function applyRuntimeTuning():Void
+	{
+		// Configure text and directory caches used by Paths utilities
+		Paths.setTextCacheMaxKB(textCacheKB);
+		Paths.setDirCacheEnabled(modsDirCache);
+		Paths.setPersistGraphics(gpuPrecache);
+
+		// Initialize thread pool according to preference (no-op on targets without threads)
+		#if sys
+		ThreadPool.init(workerThreads);
+		#end
 	}
 }

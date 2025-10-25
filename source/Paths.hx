@@ -110,6 +110,10 @@ class Paths
 		// flags everything to be cleared out next unused memory clear
 		localTrackedAssets = [];
 		openfl.Assets.cache.clear("songs");
+
+		// Also clear our internal small caches
+		clearTextCache();
+		clearDirCache();
 	}
 
 	static public var currentModDirectory:String = '';
@@ -140,6 +144,86 @@ class Paths
 
 		return getPreloadPath(file);
 	}
+
+	// -----------------------
+	// Lightweight content caches (text and directory listings)
+	// -----------------------
+	static var _textCache:Map<String, String> = new Map();
+	static var _textCacheOrder:Array<String> = [];
+	static var _textCacheBytes:Int = 0;
+	static var _textCacheMaxBytes:Int = 1024 * 1024; // default 1MB
+
+	public static function setTextCacheMaxKB(kb:Int):Void {
+		if (kb < 0) kb = 0;
+		_textCacheMaxBytes = kb * 1024;
+		// Shrink if necessary
+		trimTextCache();
+	}
+
+	static function cacheText(path:String, content:String):Void {
+		if (_textCacheMaxBytes <= 0) return;
+		var size = content.length; // bytes-ish; fine for UTF-8 small files
+		// If too big, skip caching
+		if (size > _textCacheMaxBytes) return;
+		if (_textCache.exists(path)) return; // don't double add
+		_textCache.set(path, content);
+		_textCacheOrder.push(path);
+		_textCacheBytes += size;
+		trimTextCache();
+	}
+
+	static function trimTextCache():Void {
+		if (_textCacheMaxBytes <= 0) {
+			clearTextCache();
+			return;
+		}
+		while (_textCacheBytes > _textCacheMaxBytes && _textCacheOrder.length > 0) {
+			var oldest = _textCacheOrder.shift();
+			var val = _textCache.get(oldest);
+			if (val != null) _textCacheBytes -= val.length;
+			_textCache.remove(oldest);
+		}
+		if (_textCacheBytes < 0) _textCacheBytes = 0;
+	}
+
+	static function clearTextCache():Void {
+		_textCache = new Map();
+		_textCacheOrder = [];
+		_textCacheBytes = 0;
+	}
+
+	#if sys
+	static var _dirCacheEnabled:Bool = true;
+	static var _dirCache:Map<String, { list:Array<String>, stamp:Float }> = new Map();
+	public static function setDirCacheEnabled(enabled:Bool):Void {
+		_dirCacheEnabled = enabled;
+		if (!enabled) clearDirCache();
+	}
+	static function clearDirCache():Void {
+		_dirCache = new Map();
+	}
+	static function getDirStamp(path:String):Float {
+		try {
+			return FileSystem.stat(path).mtime.getTime();
+		} catch (e:Dynamic) {}
+		return -1;
+	}
+	public static function cachedReadDirectory(path:String):Array<String> {
+		if (!_dirCacheEnabled) {
+			return FileSystem.readDirectory(path);
+		}
+		var stamp = getDirStamp(path);
+		var v = _dirCache.get(path);
+		if (v != null && v.stamp == stamp) return v.list;
+		var list = FileSystem.readDirectory(path);
+		_dirCache.set(path, { list: list, stamp: stamp });
+		return list;
+	}
+	#else
+	static inline function clearDirCache():Void {}
+	public static inline function setDirCacheEnabled(enabled:Bool):Void {}
+	public static inline function cachedReadDirectory(path:String):Array<String> { return []; }
+	#end
 
 	static public function getLibraryPath(file:String, library = "preload")
 	{
@@ -243,28 +327,55 @@ class Paths
 	{
 		#if sys
 		#if MODS_ALLOWED
-		if (!ignoreMods && FileSystem.exists(modFolders(key)))
-			return File.getContent(modFolders(key));
+		if (!ignoreMods && FileSystem.exists(modFolders(key))) {
+			var p = modFolders(key);
+			var cached = _textCache.get(p);
+			if (cached != null) return cached;
+			var txt = File.getContent(p);
+			cacheText(p, txt);
+			return txt;
+		}
 		#end
 
-		if (FileSystem.exists(getPreloadPath(key)))
-			return File.getContent(getPreloadPath(key));
+		if (FileSystem.exists(getPreloadPath(key))) {
+			var p = getPreloadPath(key);
+			var cached = _textCache.get(p);
+			if (cached != null) return cached;
+			var txt = File.getContent(p);
+			cacheText(p, txt);
+			return txt;
+		}
 
 		if (currentLevel != null)
 		{
 			var levelPath:String = '';
 			if(currentLevel != 'shared') {
 				levelPath = getLibraryPathForce(key, currentLevel);
-				if (FileSystem.exists(levelPath))
-					return File.getContent(levelPath);
+				if (FileSystem.exists(levelPath)) {
+					var cached = _textCache.get(levelPath);
+					if (cached != null) return cached;
+					var txt = File.getContent(levelPath);
+					cacheText(levelPath, txt);
+					return txt;
+				}
 			}
 
 			levelPath = getLibraryPathForce(key, 'shared');
-			if (FileSystem.exists(levelPath))
-				return File.getContent(levelPath);
+			if (FileSystem.exists(levelPath)) {
+				var cached = _textCache.get(levelPath);
+				if (cached != null) return cached;
+				var txt = File.getContent(levelPath);
+				cacheText(levelPath, txt);
+				return txt;
+			}
 		}
 		#end
-		return Assets.getText(getPath(key, TEXT));
+		var apath = getPath(key, TEXT);
+		var cached = _textCache.get(apath);
+		if (cached != null) return cached;
+		var txt = Assets.getText(apath);
+		cacheText(apath, txt);
+		return txt;
 	}
 
 	inline static public function font(key:String)
@@ -340,7 +451,7 @@ class Paths
 			if(!currentTrackedAssets.exists(modKey)) {
 				var newBitmap:BitmapData = BitmapData.fromFile(modKey);
 				var newGraphic:FlxGraphic = FlxGraphic.fromBitmapData(newBitmap, false, modKey);
-				newGraphic.persist = true;
+				newGraphic.persist = _persistGraphics;
 				currentTrackedAssets.set(modKey, newGraphic);
 			}
 			localTrackedAssets.push(modKey);
@@ -353,7 +464,7 @@ class Paths
 		if (OpenFlAssets.exists(path, IMAGE)) {
 			if(!currentTrackedAssets.exists(path)) {
 				var newGraphic:FlxGraphic = FlxG.bitmap.add(path, false, path);
-				newGraphic.persist = true;
+				newGraphic.persist = _persistGraphics;
 				currentTrackedAssets.set(path, newGraphic);
 			}
 			localTrackedAssets.push(path);
@@ -393,6 +504,13 @@ class Paths
 		localTrackedAssets.push(gottenPath);
 		return currentTrackedSounds.get(gottenPath);
 	}
+
+		// Toggle whether loaded graphics should persist in cache (GPU/bitmap)
+		static var _persistGraphics:Bool = true;
+		public static function setPersistGraphics(persist:Bool):Void {
+			_persistGraphics = persist;
+			// Already-cached graphics keep their flags; new loads will respect this.
+		}
 
 	#if MODS_ALLOWED
 	inline static public function mods(key:String = '') {
