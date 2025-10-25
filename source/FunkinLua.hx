@@ -87,7 +87,17 @@ class FunkinLua {
 
 		//LuaL.dostring(lua, CLENSE);
 		try{
-			var result:Dynamic = LuaL.dofile(lua, script);
+			var result:Dynamic = 0;
+			#if sys
+			var cached = util.ScriptCache.get(script);
+			if (cached != null) {
+				result = LuaL.dostring(lua, cached);
+			} else {
+				result = LuaL.dofile(lua, script);
+			}
+			#else
+			result = LuaL.dofile(lua, script);
+			#end
 			var resultStr:String = Lua.tostring(lua, result);
 			if(resultStr != null && result != 0) {
 				trace('Error on lua script! ' + resultStr);

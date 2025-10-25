@@ -15,6 +15,11 @@ import lime.utils.AssetLibrary;
 import lime.utils.AssetManifest;
 
 import haxe.io.Path;
+#if sys
+import sys.io.File;
+import sys.FileSystem;
+#end
+using StringTools;
 
 class LoadingState extends MusicBeatState
 {
@@ -75,11 +80,91 @@ class LoadingState extends MusicBeatState
 					checkLibrary(directory);
 				}
 
+				// Prewarm a small set of core UI graphics early to reduce first-frame hitches
+				prewarmCoreGraphics();
+
+				// Prefetch song-adjacent assets (Inst/Voices, scripts, events/dialogue) to speed up first entry
+				prefetchSongAssets();
+
 				var fadeTime = 0.5;
 				FlxG.camera.fade(FlxG.camera.bgColor, fadeTime, true);
 				new FlxTimer().start(fadeTime + MIN_TIME, function(_) introComplete());
 			}
 		);
+	}
+
+	function prewarmCoreGraphics():Void
+	{
+		if (!PlayState.gpuCahchingEnabled) return;
+		var toCache:Array<{path:String, library:Null<String>}> = [
+			{path: 'NOTE_assets', library: null},
+			{path: 'combo', library: null},
+			{path: 'sick', library: null},
+			{path: 'good', library: null},
+			{path: 'bad', library: null},
+			{path: 'shit', library: null},
+			{path: 'noteSplashes', library: null},
+			{path: 'healthBar', library: 'shared'},
+			{path: 'timeBar', library: 'shared'}
+		];
+		for (i in 0...10) toCache.push({path: 'num' + i, library: null});
+		// Pixel variants are heavier; defer to PlayState in case of pixel stage
+		for (asset in toCache) {
+			var graphic = Paths.returnGraphic(asset.path, asset.library);
+			if (graphic != null && FlxG.bitmap.get(graphic.key) == null) {
+				FlxG.bitmap.add(graphic);
+			}
+		}
+	}
+
+	function prefetchSongAssets():Void
+	{
+		// Lightweight, safe prefetching while we are on the loading screen
+		if (PlayState.SONG == null) return;
+		var addStep = function(id:String, fn:Void->Void) {
+			var cb = callbacks.add('prefetch:' + id);
+			try {
+				fn();
+			} catch (e:Dynamic) {
+				trace('prefetch ' + id + ' failed: ' + e);
+			}
+			cb();
+		};
+
+		// 1) Prime events.json parsed cache (if present)
+		addStep('events', function() {
+			var songName = Paths.formatToSongPath(PlayState.SONG.song);
+			try {
+				// Parsing will populate Song._parsedCache; ignore if missing
+				Song.loadFromJson('events', songName);
+			} catch (e:Dynamic) {}
+		});
+
+		// 2) Prime dialogue.json text if present (Paths text cache)
+		addStep('dialogue', function() {
+			var songName = Paths.formatToSongPath(PlayState.SONG.song);
+			var filePath = 'data/' + songName + '/dialogue.json';
+			try { Paths.getTextFromFile(filePath); } catch (_:Dynamic) {}
+		});
+
+		// 3) Preload stage Lua script early (lightweight, avoids directory scans)
+		addStep('stage-lua', function() {
+			#if sys
+			if (PlayState.SONG.stage != null && PlayState.SONG.stage.length > 0) {
+				try { util.ScriptCache.preload(['mods/stages/' + PlayState.SONG.stage + '.lua']); } catch (_:Dynamic) {}
+			}
+			#end
+		});
+
+		// 4) Preload Inst/Voices so PlayState can start without disk hitch
+		addStep('audio', function() {
+			try {
+				Paths.inst(PlayState.SONG.song);
+				if (PlayState.SONG.needsVoices) Paths.voices(PlayState.SONG.song);
+			} catch (e:Dynamic) {
+				trace('prefetch audio failed: ' + e);
+			}
+		});
 	}
 	
 	function checkLoadSong(path:String)

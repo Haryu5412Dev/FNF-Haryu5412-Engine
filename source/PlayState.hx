@@ -943,6 +943,8 @@ class PlayState extends MusicBeatState
 			foldersToCheck.insert(0, Paths.mods(mod + '/scripts/'));
 		#end
 
+		// Preload script texts into memory to speed up first load
+		var toPreload:Array<String> = [];
 		for (folder in foldersToCheck)
 		{
 			if(FileSystem.exists(folder))
@@ -951,12 +953,14 @@ class PlayState extends MusicBeatState
 				{
 					if(file.endsWith('.lua') && !filesPushed.contains(file))
 					{
-						luaArray.push(new FunkinLua(folder + file));
+						toPreload.push(folder + file);
 						filesPushed.push(file);
 					}
 				}
 			}
 		}
+		util.ScriptCache.preload(toPreload);
+		for (p in toPreload) luaArray.push(new FunkinLua(p));
 		#end
 
 
@@ -974,8 +978,10 @@ class PlayState extends MusicBeatState
 			}
 		}
 
-		if(doPush)
+		if(doPush){
+			util.ScriptCache.preload([luaFile]);
 			luaArray.push(new FunkinLua(luaFile));
+		}
 		#end
 
 		var gfVersion:String = SONG.gfVersion;
@@ -1254,6 +1260,7 @@ class PlayState extends MusicBeatState
 			var luaToLoad:String = Paths.modFolders('custom_notetypes/' + notetype + '.lua');
 			if(FileSystem.exists(luaToLoad))
 			{
+				util.ScriptCache.preload([luaToLoad]);
 				luaArray.push(new FunkinLua(luaToLoad));
 			}
 			else
@@ -1261,6 +1268,7 @@ class PlayState extends MusicBeatState
 				luaToLoad = Paths.getPreloadPath('custom_notetypes/' + notetype + '.lua');
 				if(FileSystem.exists(luaToLoad))
 				{
+					util.ScriptCache.preload([luaToLoad]);
 					luaArray.push(new FunkinLua(luaToLoad));
 				}
 			}
@@ -1268,6 +1276,7 @@ class PlayState extends MusicBeatState
 			var luaToLoad:String = Paths.getPreloadPath('custom_notetypes/' + notetype + '.lua');
 			if(OpenFlAssets.exists(luaToLoad))
 			{
+				util.ScriptCache.preload([luaToLoad]);
 				luaArray.push(new FunkinLua(luaToLoad));
 			}
 			#end
@@ -1278,6 +1287,7 @@ class PlayState extends MusicBeatState
 			var luaToLoad:String = Paths.modFolders('custom_events/' + event + '.lua');
 			if(FileSystem.exists(luaToLoad))
 			{
+				util.ScriptCache.preload([luaToLoad]);
 				luaArray.push(new FunkinLua(luaToLoad));
 			}
 			else
@@ -1285,6 +1295,7 @@ class PlayState extends MusicBeatState
 				luaToLoad = Paths.getPreloadPath('custom_events/' + event + '.lua');
 				if(FileSystem.exists(luaToLoad))
 				{
+					util.ScriptCache.preload([luaToLoad]);
 					luaArray.push(new FunkinLua(luaToLoad));
 				}
 			}
@@ -1292,6 +1303,7 @@ class PlayState extends MusicBeatState
 			var luaToLoad:String = Paths.getPreloadPath('custom_events/' + event + '.lua');
 			if(OpenFlAssets.exists(luaToLoad))
 			{
+				util.ScriptCache.preload([luaToLoad]);
 				luaArray.push(new FunkinLua(luaToLoad));
 			}
 			#end
@@ -1320,14 +1332,17 @@ class PlayState extends MusicBeatState
 		{
 			if(FileSystem.exists(folder))
 			{
+				var toPreload:Array<String> = [];
 				for (file in Paths.cachedReadDirectory(folder))
 				{
 					if(file.endsWith('.lua') && !filesPushed.contains(file))
 					{
-						luaArray.push(new FunkinLua(folder + file));
+						toPreload.push(folder + file);
 						filesPushed.push(file);
 					}
 				}
+				util.ScriptCache.preload(toPreload);
+				for (p in toPreload) luaArray.push(new FunkinLua(p));
 			}
 		}
 		#end

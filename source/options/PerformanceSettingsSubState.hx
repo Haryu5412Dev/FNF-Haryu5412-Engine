@@ -17,7 +17,7 @@ class PerformanceSettingsSubState extends BaseOptionsMenu {
 			0);
 		optThreads.minValue = 0;
 		optThreads.maxValue = Math.max(1, hw);
-		optThreads.displayFormat = '%v (0=Auto, max: ' + hw + ')';
+		optThreads.displayFormat = '%v';
 		optThreads.onChange = function() {
 			#if sys
 			util.ThreadPool.init(ClientPrefs.workerThreads);
