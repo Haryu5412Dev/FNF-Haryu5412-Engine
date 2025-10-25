@@ -145,7 +145,7 @@ class ClientPrefs
 		FlxG.save.flush();
 
 		var save:FlxSave = new FlxSave();
-		save.bind('controls_v2', 'ninjamuffin99'); // Placing this in a separate save so that it can be manually deleted without removing your Score and stuff
+		save.bind('controls_v2', 'haryulovescat'); // Placing this in a separate save so that it can be manually deleted without removing your Score and stuff
 		save.data.customControls = keyBinds;
 		save.flush();
 		// FlxG.log.add("Settings saved!");
@@ -332,7 +332,7 @@ class ClientPrefs
 			comboStacking = FlxG.save.data.comboStacking;
 
 		var save:FlxSave = new FlxSave();
-		save.bind('controls_v2', 'ninjamuffin99');
+		save.bind('controls_v2', 'haryulovescat');
 		if (save != null && save.data.customControls != null)
 		{
 			var loadedControls:Map<String, Array<FlxKey>> = save.data.customControls;
