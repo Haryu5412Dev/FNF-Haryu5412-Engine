@@ -69,12 +69,12 @@ class Cache extends MusicBeatState
 		menuBG.scale.set(1.0, 1.0);
 		add(menuBG);
 
-	shitz = new FlxText(12, 12, 0, "Preparing boot preload...", 12);
-	shitz.scrollFactor.set();
-	shitz.setFormat(Paths.font("vcr.ttf"), 24, FlxColor.WHITE);
-	shitz.alignment = LEFT;
-	untyped shitz.borderStyle = FlxTextBorderStyle.OUTLINE;
-	untyped shitz.borderColor = FlxColor.BLACK;
+	shitz = new FlxText(60, 12, FlxG.width - 70, "Preparing boot preload...", 12);
+	shitz.scrollFactor.set(0, 0);
+		shitz.setFormat(Paths.font("vcr.ttf"), 24, FlxColor.WHITE);
+		shitz.alignment = RIGHT;
+		untyped shitz.borderStyle = FlxTextBorderStyle.OUTLINE;
+		untyped shitz.borderColor = FlxColor.BLACK;
 		add(shitz);
 
 		// Build work queues on main thread

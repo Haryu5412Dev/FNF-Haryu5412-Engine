@@ -11,6 +11,8 @@ class HoldSplashEffect extends FlxGroup {
     public var holdSplashMap:Map<String, FlxSprite> = new Map();
     public var holdSplashColorMap:Map<FlxSprite, ColorSwap> = new Map();
     public var splashNoteMap:Map<FlxSprite, Note> = new Map();
+    // 연타/프레임 드랍으로 hide 호출이 누락되어도 자동으로 수거하기 위한 타이머
+    public var holdAliveTimers:Map<FlxSprite, Float> = new Map();
     public var colors:Array<String> = ['Purple', 'Blue', 'Green', 'Red'];
     public var alphaBF:Float = 1;
     public var alphaDAD:Float = 1;
@@ -62,6 +64,9 @@ class HoldSplashEffect extends FlxGroup {
         // for angle? ig
         if (note != null) {
             splash.angle = note.angle;
+        } else if (strum != null) {
+            // 노트가 없을 때는 기본 리시버(스트럼)의 각도를 따른다
+            splash.angle = strum.angle;
         } else {
             splash.angle = 0;
         }
@@ -103,6 +108,8 @@ class HoldSplashEffect extends FlxGroup {
         }
     
         if (note != null) splashNoteMap.set(splash, note);
+        // 홀드가 살아있음을 표시: 연타/프레임 드랍 상황에서도 주기적으로 갱신됨
+        holdAliveTimers.set(splash, 0);
     
         var hue:Float = 0;
         var sat:Float = 0;
@@ -151,8 +158,10 @@ class HoldSplashEffect extends FlxGroup {
             splash.visible = false;
             splash.animation.play('hold', true);
             splashNoteMap.remove(splash);
+            holdAliveTimers.remove(splash);
         } else {
             splash.animation.play('end', true);
+            holdAliveTimers.remove(splash);
         }
     }
 
@@ -180,10 +189,35 @@ class HoldSplashEffect extends FlxGroup {
                         }
                     }
 
+                    // 연타/프레임 드랍으로 hide가 누락된 경우를 위한 자동 정리
+                    if (holdAliveTimers.exists(splash)) {
+                        var t = holdAliveTimers.get(splash);
+                        if (t == null) t = 0;
+                        t += elapsed;
+                        holdAliveTimers.set(splash, t);
+
+                        // sustain 트리거가 일정 시간 이상 갱신되지 않으면 자동으로 종료 처리
+                        // 보수적으로 0.2초로 설정 (한 박자보다 충분히 짧고, 프레임 드랍에 내성)
+                        if (splash.animation.curAnim != null && splash.animation.curAnim.name == 'hold' && t > 0.2) {
+                            if (isOpponent) {
+                                splash.visible = false;
+                                splash.animation.play('hold', true);
+                                splashNoteMap.remove(splash);
+                                holdAliveTimers.remove(splash);
+                            } else {
+                                if (splash.animation.curAnim.name != 'end') {
+                                    splash.animation.play('end', true);
+                                }
+                                holdAliveTimers.remove(splash);
+                            }
+                        }
+                    }
+
                     if (splash.animation.curAnim.name == 'end' && splash.animation.finished) {
                         splash.visible = false;
                         splash.animation.play('hold', true);
                         splashNoteMap.remove(splash);
+                        holdAliveTimers.remove(splash);
                     }
                 }
             }
