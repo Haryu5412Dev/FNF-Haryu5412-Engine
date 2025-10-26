@@ -74,6 +74,10 @@ class GraphicsSettingsSubState extends BaseOptionsMenu
 		option.onChange = onChangeFramerate;
 		#end
 
+		var option:Option = new Option('Use FlxAnimate (Experimental)',
+			'Use FlxAnimate for Animate CC atlases when available. Requires library; may increase compatibility and reduce memory.','useFlxAnimate','bool',false);
+		addOption(option);
+
 		super();
 	}
 

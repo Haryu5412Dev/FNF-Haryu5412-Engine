@@ -24,3 +24,5 @@ export/*
 # For Haryu's Mods
 mods/FND/*
 mods/CAWM/*
+docs/*
+docs/

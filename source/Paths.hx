@@ -617,7 +617,9 @@ class Paths
 		var list:Array<String> = [];
 		var modsFolder:String = mods();
 		if(FileSystem.exists(modsFolder)) {
-			for (folder in FileSystem.readDirectory(modsFolder)) {
+			// Use cached directory listing for performance on sys targets
+			var entries:Array<String> = #if sys cachedReadDirectory(modsFolder) #else FileSystem.readDirectory(modsFolder) #end;
+			for (folder in entries) {
 				var path = haxe.io.Path.join([modsFolder, folder]);
 				if (sys.FileSystem.isDirectory(path) && !ignoreModFolders.contains(folder) && !list.contains(folder)) {
 					list.push(folder);

@@ -106,6 +106,8 @@
 	<haxelib name="hxCodec" if="VIDEOS_ALLOWED"/>
 	<haxelib name="faxe" if='switch'/>
 	<haxelib name="discord_rpc" if="desktop"/>
+	<!-- Optional: FlxAnimate support for Animate CC atlases -->
+	<haxelib name="flxanimate" />
 
 	<!-- ______________________________ Haxedefines _____________________________ -->
 

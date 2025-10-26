@@ -25,6 +25,8 @@ class ClientPrefs
 	public static var lowQuality:Bool = false;
 	public static var shaders:Bool = true;
 	public static var framerate:Int = 63;
+	// Experimental: Prefer FlxAnimate for Animate atlas assets where available
+	public static var useFlxAnimate:Bool = false;
 	// Performance preferences
 	// 0 means Auto (we'll pick a sensible default based on platform/CPU)
 	public static var workerThreads:Int = 0;
@@ -138,6 +140,7 @@ class ClientPrefs
 		FlxG.save.data.lowQuality = lowQuality;
 		FlxG.save.data.shaders = shaders;
 		FlxG.save.data.framerate = framerate;
+		FlxG.save.data.useFlxAnimate = useFlxAnimate;
 		FlxG.save.data.workerThreads = workerThreads;
 		FlxG.save.data.aggressiveMemory = aggressiveMemory;
 		FlxG.save.data.textCacheKB = textCacheKB;
@@ -303,6 +306,9 @@ class ClientPrefs
 				FlxG.drawFramerate = framerate;
 				FlxG.updateFramerate = framerate;
 			}
+		}
+		if (FlxG.save.data.useFlxAnimate != null) {
+			useFlxAnimate = FlxG.save.data.useFlxAnimate;
 		}
 		/*if(FlxG.save.data.cursing != null) {
 				cursing = FlxG.save.data.cursing;

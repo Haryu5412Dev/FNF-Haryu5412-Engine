@@ -1,6 +1,7 @@
 package;
 
 import animateatlas.AtlasFrameMaker;
+import util.FlxAnimateUtil;
 import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.addons.effects.FlxTrail;
@@ -155,7 +156,18 @@ class Character extends FlxSprite
 					spriteType = "texture";
 				}
 
-				switch (spriteType){
+				var flxAnimateTried:Bool = false;
+				// Prefer FlxAnimate path when enabled and available; fall back to legacy paths on failure
+				if (ClientPrefs.useFlxAnimate && FlxAnimateUtil.isAvailable() && FlxAnimateUtil.likelyAnimateAtlas(json.image)) {
+					try {
+						frames = FlxAnimateUtil.constructFrames(json.image);
+						flxAnimateTried = true;
+					} catch (e:Dynamic) {
+						flxAnimateTried = false;
+					}
+				}
+
+				if (!flxAnimateTried) switch (spriteType){
 					
 					case "packer":
 						frames = Paths.getPackerAtlas(json.image);
