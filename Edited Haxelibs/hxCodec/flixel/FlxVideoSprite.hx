@@ -4,6 +4,7 @@ package hxcodec.flixel;
 import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.util.FlxColor;
+import flixel.util.FlxTimer;
 
 import sys.FileSystem;
 import hxcodec.openfl.Video;
@@ -16,6 +17,7 @@ class FlxVideoSprite extends FlxSprite
 	// Variables
 	public var bitmap(default, null):FlxVideo;
 	public var onEndReached:Void->Void = null;
+	private var _disposed:Bool = false;
 
 	public function new(x:Float = 0, y:Float = 0):Void
 	{
@@ -25,6 +27,7 @@ class FlxVideoSprite extends FlxSprite
 
 		bitmap = new FlxVideo();
 		bitmap.alpha = 0;
+		bitmap.autoResize = false; // we'll manage scaling/positioning via this FlxSprite
 
 		bitmap.onOpening.add(function()
 		{
@@ -33,18 +36,27 @@ class FlxVideoSprite extends FlxSprite
 			#end
 		});
 
-		// // Add onEndReached function
-			bitmap.onEndReached.add(function() {
-				if (bitmap != null) {
-					bitmap.dispose();
-					if (FlxG.game.contains(bitmap)) {
-						FlxG.game.removeChild(bitmap);
+
+		// Dispose safely after playback ends: stop first, then dispose slightly later, then notify user
+		bitmap.onEndReached.add(function() {
+			if (bitmap != null) {
+				bitmap.stop();
+				new FlxTimer().start(0.05, function(_) {
+					if (bitmap != null && !_disposed) {
+						_disposed = true;
+						bitmap.dispose();
+						if (FlxG.game.contains(bitmap)) {
+							FlxG.game.removeChild(bitmap);
+						}
 					}
-				}
-				if (onEndReached != null) {
-					onEndReached();
-				}
-			});
+					if (onEndReached != null) {
+						onEndReached();
+					}
+				});
+			} else {
+				if (onEndReached != null) onEndReached();
+			}
+		});
 
 		bitmap.onTextureSetup.add(() -> loadGraphic(bitmap.bitmapData));
 		FlxG.game.addChild(bitmap);
@@ -132,7 +144,11 @@ class FlxVideoSprite extends FlxSprite
 
 		if (bitmap != null)
 		{
-			bitmap.dispose();
+			bitmap.stop();
+			if (!_disposed) {
+				_disposed = true;
+				bitmap.dispose();
+			}
 
 			if (FlxG.game.contains(bitmap))
 				FlxG.game.removeChild(bitmap);

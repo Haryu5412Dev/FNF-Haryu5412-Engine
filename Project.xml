@@ -45,6 +45,8 @@
 	<set name="BUILD_DIR" value="export/32bit" if="32bits" />
 
 	<classpath name="source" />
+	<!-- Local overrides for hxCodec classes to fix video end/dispose race issues -->
+	<classpath name="Edited Haxelibs" />
 	
 	<!-- PSYCH ENGINE CUSTOMIZATION -->
 	<define name="MODS_ALLOWED" if="desktop" />

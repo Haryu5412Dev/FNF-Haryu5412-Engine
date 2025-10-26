@@ -1684,40 +1684,10 @@ class PlayState extends MusicBeatState
 
 	public function startVideo(name:String)
 		{
+			// Backward-compatible wrapper: delegate to makeVideo on camOther with a temp tag
 			#if VIDEOS_ALLOWED
 			inCutscene = true;
-	
-			var filepath:String = Paths.video(name);
-			#if sys
-			if(!FileSystem.exists(filepath))
-			#else
-			if(!OpenFlAssets.exists(filepath))
-			#end
-			{
-				FlxG.log.warn('Couldnt find video file: ' + name);
-				startAndEnd();
-				return;
-			}
-	
-			var video:FlxVideo = new FlxVideo();
-				#if (hxCodec >= "3.0.0")
-				// Recent versions
-				video.play(filepath);
-				video.onEndReached.add(function()
-				{
-					video.dispose();
-					startAndEnd();
-					return;
-				}, true);
-				#else
-				// Older versions
-				video.playVideo(filepath);
-				video.finishCallback = function()
-				{
-					startAndEnd();
-					return;
-				}
-				#end
+			makeVideo(name, "__startVideo", camOther, null);
 			#else
 			FlxG.log.warn('Platform not supported!');
 			startAndEnd();
@@ -1736,8 +1706,7 @@ class PlayState extends MusicBeatState
 		// ------------------- BASE CODES ------------------- 
 
 
-
-		// ------------------- DEPRECATED -------------------
+	// ------------------- DEPRECATED -------------------
 
 		public function makeCutSenceVideo(name:String)
 			{
@@ -1793,11 +1762,6 @@ class PlayState extends MusicBeatState
 				startAndEnd();
 				return;
 			}
-		
-			var videoBox:FlxSprite = new FlxSprite().makeGraphic(1280, 720, FlxColor.TRANSPARENT);
-			videoBox.screenCenter();
-			videoBox.cameras = [camOther];
-			add(videoBox);
 		
 			var videoSprite = new FlxVideoSprite();
 			videoSprite.play(filepath, false);
@@ -1861,9 +1825,8 @@ class PlayState extends MusicBeatState
 		
 			videoSprite.onEndReached = function()
 			{
-				if (videoSprite != null)
-					videoSprite.stop();
-				remove(videoSprite);
+				if (videoSprite != null) videoSprite.stop();
+				remove(videoSprite, true);
 				videoSprites.remove(tag);
 				startAndEnd();
 				return;
@@ -1918,7 +1881,7 @@ class PlayState extends MusicBeatState
 			if(videoSprite != null)
 			{
 				videoSprite.stop();
-				remove(videoSprite);
+				remove(videoSprite, true);
 				videoSprites.remove(tag);
 			}
 		}
@@ -1945,6 +1908,8 @@ class PlayState extends MusicBeatState
 			PlayState.instance.modchartTweens.set(twtag, twn);
 		}
 	}
+
+
 
 	// Videospites are stored in a map, so you can access them by their tag
 	// and videosprites now low memory usage
@@ -5419,6 +5384,18 @@ class PlayState extends MusicBeatState
 		}
 		FlxAnimationController.globalSpeed = 1;
 		FlxG.sound.music.pitch = 1;
+
+		// Ensure all videos are stopped and disposed when leaving the state
+		#if VIDEOS_ALLOWED
+		for (tag in videoSprites.keys()) {
+			var v = videoSprites.get(tag);
+			if (v != null) {
+				v.stop();
+				remove(v, true);
+			}
+		}
+		videoSprites.clear();
+		#end
 		super.destroy();
 	}
 

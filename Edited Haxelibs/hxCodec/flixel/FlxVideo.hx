@@ -22,9 +22,7 @@ class FlxVideo extends Video
 			#end
 		});
 
-		onEndReached.add(function() {
-			dispose();
-		});
+		// Don't dispose immediately on end; let owner decide and ensure decode thread stops first.
 
 		FlxG.addChildBelowMouse(this);
 	}
