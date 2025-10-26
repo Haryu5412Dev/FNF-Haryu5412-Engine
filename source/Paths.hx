@@ -123,6 +123,61 @@ class Paths
 		currentLevel = name.toLowerCase();
 	}
 
+	static var _modFoldersCache:Map<String, String> = new Map();
+	static inline function _modFoldersCacheKey(key:String):String {
+		return (currentModDirectory != null ? currentModDirectory : '') + '|' + key;
+	}
+	static function _clearModFoldersCache():Void {
+		_modFoldersCache = new Map();
+	}
+
+	// Nested mod discovery cache (for mods inside other mod folders)
+	static var _nestedModNames:Array<String> = null; // entries like "root/sub"
+	static var _nestedModsKey:String = '';
+	static function clearNestedModsCache():Void {
+		_nestedModNames = null;
+		_nestedModsKey = '';
+	}
+
+	#if MODS_ALLOWED
+	static inline function buildNestedModsKey():String {
+		var cur = currentModDirectory != null ? currentModDirectory : '';
+		var globals = getGlobalMods();
+		return cur + '|' + globals.join(',');
+	}
+
+	static function ensureNestedModsComputed():Void {
+		#if sys
+		var key = buildNestedModsKey();
+		if (_nestedModNames != null && _nestedModsKey == key) return;
+		_nestedModsKey = key;
+		var names:Array<String> = [];
+		var roots:Array<String> = [];
+		if (currentModDirectory != null && currentModDirectory.length > 0) {
+			roots.push(currentModDirectory);
+		}
+		for (mod in getGlobalMods()) roots.push(mod);
+		for (root in roots) {
+			var basePath = mods(root);
+			if (!FileSystem.exists(basePath) || !FileSystem.isDirectory(basePath)) continue;
+			var entries = cachedReadDirectory(basePath);
+			for (sub in entries) {
+				var subPath = basePath + '/' + sub;
+				if (!FileSystem.isDirectory(subPath)) continue;
+				// Treat only valid nested mods (those having a pack.json)
+				var packPath = subPath + '/pack.json';
+				if (FileSystem.exists(packPath)) {
+					names.push(root + '/' + sub);
+				}
+			}
+		}
+		_nestedModNames = names;
+		#else
+		_nestedModNames = [];
+		#end
+	}
+	#end
+
 	public static function getPath(file:String, type:AssetType, ?library:Null<String> = null)
 	{
 		if (library != null)
@@ -145,9 +200,7 @@ class Paths
 		return getPreloadPath(file);
 	}
 
-	// -----------------------
 	// Lightweight content caches (text and directory listings)
-	// -----------------------
 	static var _textCache:Map<String, String> = new Map();
 	static var _textCacheOrder:Array<String> = [];
 	static var _textCacheBytes:Int = 0;
@@ -560,20 +613,40 @@ class Paths
 	}*/
 
 	static public function modFolders(key:String) {
+		var cacheKey = _modFoldersCacheKey(key);
+		var cached = _modFoldersCache.get(cacheKey);
+		if (cached != null) return cached;
+
 		if(currentModDirectory != null && currentModDirectory.length > 0) {
 			var fileToCheck:String = mods(currentModDirectory + '/' + key);
 			if(FileSystem.exists(fileToCheck)) {
+				_modFoldersCache.set(cacheKey, fileToCheck);
 				return fileToCheck;
 			}
 		}
 
 		for(mod in getGlobalMods()){
 			var fileToCheck:String = mods(mod + '/' + key);
-			if(FileSystem.exists(fileToCheck))
+			if(FileSystem.exists(fileToCheck)) {
+				_modFoldersCache.set(cacheKey, fileToCheck);
 				return fileToCheck;
-
+			}
 		}
-		return 'mods/' + key;
+
+		// Search nested mod folders one level deep (e.g., mods/Pack/SubMod/...)
+		#if MODS_ALLOWED
+		ensureNestedModsComputed();
+		for (nested in (_nestedModNames == null ? [] : _nestedModNames)) {
+			var nestedCheck = mods(nested + '/' + key);
+			if (FileSystem.exists(nestedCheck)) {
+				_modFoldersCache.set(cacheKey, nestedCheck);
+				return nestedCheck;
+			}
+		}
+		#end
+		var def = 'mods/' + key;
+		_modFoldersCache.set(cacheKey, def);
+		return def;
 	}
 
 	public static var globalMods:Array<String> = [];
@@ -584,6 +657,8 @@ class Paths
 	static public function pushGlobalMods() // prob a better way to do this but idc
 	{
 		globalMods = [];
+		_clearModFoldersCache();
+		clearNestedModsCache();
 		var path:String = 'modsList.txt';
 		if(FileSystem.exists(path))
 		{

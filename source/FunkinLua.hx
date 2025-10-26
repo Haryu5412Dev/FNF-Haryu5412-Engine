@@ -7,6 +7,7 @@ import llua.LuaL;
 import llua.State;
 import llua.Convert;
 #end
+import util.LuaPool;
 
 import animateatlas.AtlasFrameMaker;
 import flixel.FlxG;
@@ -78,9 +79,13 @@ class FunkinLua {
 	
 	public function new(script:String) {
 		#if LUA_ALLOWED
-		lua = LuaL.newstate();
-		LuaL.openlibs(lua);
-		Lua.init_callbacks(lua);
+		var pooled = LuaPool.get();
+		lua = cast pooled;
+		if (lua == null) {
+			lua = LuaL.newstate();
+			LuaL.openlibs(lua);
+			Lua.init_callbacks(lua);
+		}
 
 		//trace('Lua version: ' + Lua.version());
 		//trace("LuaJIT version: " + Lua.versionJIT());

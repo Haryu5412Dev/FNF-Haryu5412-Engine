@@ -161,25 +161,21 @@ class LoadingState extends MusicBeatState
 			try { Paths.getTextFromFile(filePath); } catch (_:Dynamic) {}
 		});
 
-		// 3) Preload stage Lua script early (lightweight, avoids directory scans)
-		addStep('stage-lua', function() {
-			#if sys
-			if (PlayState.SONG.stage != null && PlayState.SONG.stage.length > 0) {
-				try { util.ScriptCache.preload(['mods/stages/' + PlayState.SONG.stage + '.lua']); } catch (_:Dynamic) {}
-			}
-			#end
-		});
-
-		// 3b) Preload global, song, custom event/notetype lua scripts via FSUtil
 		addStep('lua-scripts', function() {
 			#if sys
 			var list:Array<String> = [];
 			var songName = Paths.formatToSongPath(PlayState.SONG.song);
+			if (PlayState.SONG.stage != null && PlayState.SONG.stage.length > 0) {
+				list.push('mods/stages/' + PlayState.SONG.stage + '.lua');
+			}
 			list = list.concat(util.FSUtil.listFilesWithExt('mods/scripts', 'lua'));
 			list = list.concat(util.FSUtil.listFilesWithExt('mods/custom_events', 'lua'));
 			list = list.concat(util.FSUtil.listFilesWithExt('mods/custom_notetypes', 'lua'));
 			list = list.concat(util.FSUtil.listFilesWithExt('mods/data/' + songName, 'lua'));
-			if (list.length > 0) try { util.ScriptCache.preload(list); } catch (_:Dynamic) {}
+			if (list.length > 0) {
+				try { util.ScriptCache.preload(list); } catch (_:Dynamic) {}
+				try { util.LuaPool.prewarm(list.length); } catch (_:Dynamic) {}
+			}
 			#end
 		});
 
