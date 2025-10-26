@@ -120,6 +120,13 @@ class VisualsUISubState extends BaseOptionsMenu
 		true);
 		addOption(option);
 		option.onChange = onChangeFPSCounter;
+
+		var option:Option = new Option('OS Line in FPS',
+		"If unchecked, hides the OS line in the FPS overlay.",
+		'showOS',
+		'bool',
+		true);
+		addOption(option);
 		#end
 		
 		var option:Option = new Option('Pause Screen Song:',

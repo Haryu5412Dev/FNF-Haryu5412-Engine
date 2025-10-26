@@ -108,7 +108,16 @@ class LoadingState extends MusicBeatState
 			{path: 'timeBar', library: 'shared'}
 		];
 		for (i in 0...10) toCache.push({path: 'num' + i, library: null});
-		// Pixel variants are heavier; defer to PlayState in case of pixel stage
+		// Optional: pixel UI prewarm
+		if (ClientPrefs.prewarmPixelAssets) {
+			toCache.push({path: 'arrows-pixels', library: null});
+			toCache.push({path: 'pixelUI', library: null});
+			for (i in 0...10) toCache.push({path: 'pixelUI/num' + i, library: null});
+		}
+		// Optional: stage-specific prewarm (best-effort)
+		if (ClientPrefs.prewarmStageAssets && PlayState.SONG != null && PlayState.SONG.stage != null && PlayState.SONG.stage.length > 0) {
+			toCache.push({path: 'stages/' + PlayState.SONG.stage, library: null});
+		}
 		for (asset in toCache) {
 			var graphic = Paths.returnGraphic(asset.path, asset.library);
 			if (graphic != null && FlxG.bitmap.get(graphic.key) == null) {
@@ -156,15 +165,39 @@ class LoadingState extends MusicBeatState
 			#end
 		});
 
-		// 4) Preload Inst/Voices so PlayState can start without disk hitch
-		addStep('audio', function() {
-			try {
-				Paths.inst(PlayState.SONG.song);
-				if (PlayState.SONG.needsVoices) Paths.voices(PlayState.SONG.song);
-			} catch (e:Dynamic) {
-				trace('prefetch audio failed: ' + e);
-			}
+		// 3b) Preload global, song, custom event/notetype lua scripts via FSUtil
+		addStep('lua-scripts', function() {
+			#if sys
+			var list:Array<String> = [];
+			var songName = Paths.formatToSongPath(PlayState.SONG.song);
+			list = list.concat(util.FSUtil.listFilesWithExt('mods/scripts', 'lua'));
+			list = list.concat(util.FSUtil.listFilesWithExt('mods/custom_events', 'lua'));
+			list = list.concat(util.FSUtil.listFilesWithExt('mods/custom_notetypes', 'lua'));
+			list = list.concat(util.FSUtil.listFilesWithExt('mods/data/' + songName, 'lua'));
+			if (list.length > 0) try { util.ScriptCache.preload(list); } catch (_:Dynamic) {}
+			#end
 		});
+
+		// 4) Preload Inst/Voices; optionally gate countdown until done
+		if (ClientPrefs.waitAudioPreload) {
+			addStep('audio', function() {
+				try {
+					Paths.inst(PlayState.SONG.song);
+					if (PlayState.SONG.needsVoices) Paths.voices(PlayState.SONG.song);
+				} catch (e:Dynamic) {
+					trace('prefetch audio failed: ' + e);
+				}
+			});
+		} else {
+			#if sys
+			sys.thread.Thread.create(function() {
+				try {
+					Paths.inst(PlayState.SONG.song);
+					if (PlayState.SONG.needsVoices) Paths.voices(PlayState.SONG.song);
+				} catch (_:Dynamic) {}
+			});
+			#end
+		}
 	}
 	
 	function checkLoadSong(path:String)

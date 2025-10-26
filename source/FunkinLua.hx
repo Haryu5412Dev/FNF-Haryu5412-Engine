@@ -1085,6 +1085,20 @@ class FunkinLua {
 			return true;
 		});
 
+		// FPS overlay helpers (post-refactor): allow Lua to customize overlay text and color safely
+		Lua_helper.add_callback(lua, "setFPSText", function(text:String) {
+			openfl.display.FPS.overrideText = text;
+		});
+		Lua_helper.add_callback(lua, "resetFPSText", function() {
+			openfl.display.FPS.overrideText = null;
+		});
+		Lua_helper.add_callback(lua, "appendFPSInfo", function(text:String) {
+			openfl.display.FPS.extraInfo = text;
+		});
+		Lua_helper.add_callback(lua, "setFPSTextColor", function(color:Int) {
+			openfl.display.FPS.customColorOverride = color;
+		});
+
 		//shitass stuff for epic coders like me B)  *image of obama giving himself a medal*
 		Lua_helper.add_callback(lua, "getObjectOrder", function(obj:String) {
 			var killMe:Array<String> = obj.split('.');

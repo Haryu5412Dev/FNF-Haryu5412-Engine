@@ -38,6 +38,12 @@ extern "C" double getMemoryUsageMB() {
 class FPS extends TextField
 {
     public static var fpsText:TextField;
+    // Optional override for full overlay text (set by mods/Lua). If not null, replaces default content.
+    public static var overrideText:String = null;
+    // Optional extra info line appended to the default overlay (ignored if overrideText is used)
+    public static var extraInfo:String = null;
+    // Optional color override for the overlay text.
+    public static var customColorOverride:Null<Int> = null;
 
     public var currentFPS(default, null):Int;
 
@@ -88,7 +94,7 @@ class FPS extends TextField
         fpsText.textColor = 0xA8FFFFFF;
         fpsText.autoSize = LEFT;
         fpsText.alpha = 0.6;
-        Lib.current.addChild(fpsText);
+        openfl.Lib.current.addChild(fpsText);
     }
 
     @:noCompletion
@@ -143,7 +149,7 @@ class FPS extends TextField
             else if (rawOS.indexOf("ios") != -1) {
                 osShort = "iOS";
             }
-            var osString = "\nOS: " + osShort;
+            var osString = ClientPrefs.showOS ? ("\nOS: " + osShort) : "";
 
             #if cpp
             memoryMegas = untyped __global__.getMemoryUsageMB();
@@ -157,16 +163,29 @@ class FPS extends TextField
             }
             #end
 
-            if (ClientPrefs.showRAM) {
-                fpsText.htmlText = fpsString + memoryString + osString;
+            // If override text is provided, use it entirely; otherwise build default and append extraInfo if present
+            if (overrideText != null) {
+                fpsText.htmlText = overrideText;
             } else {
-                fpsText.htmlText = fpsString + osString;
+                if (ClientPrefs.showRAM) {
+                    fpsText.htmlText = fpsString + memoryString + osString;
+                } else {
+                    fpsText.htmlText = fpsString + osString;
+                }
+                if (extraInfo != null && extraInfo.length > 0) {
+                    fpsText.htmlText += "\n" + extraInfo;
+                }
             }
 
-            fpsText.textColor = 0xA8FFFFFF;
-            if (memoryMegas > 3000 || currentFPS <= ClientPrefs.framerate / 2)
-            {
-                fpsText.textColor = 0xFFFF0000;
+            // Default color is semi-white; pick red under heavy load unless custom override is set
+            if (customColorOverride != null) {
+                fpsText.textColor = customColorOverride;
+            } else {
+                fpsText.textColor = 0xA8FFFFFF;
+                if (memoryMegas > 3000 || currentFPS <= ClientPrefs.framerate / 2)
+                {
+                    fpsText.textColor = 0xFFFF0000;
+                }
             }
 
             #if (gl_stats && !disable_cffi && (!html5 || !canvas))

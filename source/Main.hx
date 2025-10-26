@@ -30,7 +30,11 @@ class Main extends Sprite
 {
 	var gameWidth:Int = 1280;
 	var gameHeight:Int = 720;
+	#if sys
+	var initialState:Class<FlxState> = Cache; // Start with Cache; it will quickly hand off to TitleState if boot preloading is disabled
+	#else
 	var initialState:Class<FlxState> = TitleState;
+	#end
 	var zoom:Float = -1;
 	var framerate:Int = 60;
 	var skipSplash:Bool = true;

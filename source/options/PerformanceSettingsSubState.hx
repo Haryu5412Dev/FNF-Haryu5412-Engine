@@ -9,8 +9,8 @@ class PerformanceSettingsSubState extends BaseOptionsMenu {
 
 		var hw = #if sys util.ThreadPool.getHardwareThreadCount() #else 1 #end;
 
-		// Worker threads (0 = Auto)
-		var optThreads:Option = new Option('Worker Threads',
+		// CPU Worker threads (0 = Auto)
+		var optThreads:Option = new Option('CPU Threads',
 			'Sets background worker threads for file parsing/loading. 0 = Auto (recommended).',
 			'workerThreads',
 			'int',
@@ -68,6 +68,46 @@ class PerformanceSettingsSubState extends BaseOptionsMenu {
 			Paths.setDirCacheEnabled(ClientPrefs.modsDirCache);
 		};
 		addOption(optDirCache);
+
+		// Audio preload gating
+		var optWaitAudio:Option = new Option('Wait Audio Preload',
+			'If enabled, the loading screen waits for Inst/Voices to finish preloading before starting the song.',
+			'waitAudioPreload',
+			'bool',
+			true);
+		addOption(optWaitAudio);
+
+		// Boot-time preload (Cache state before Title)
+		var optBootPreload:Option = new Option('Boot Preload (Before Title)',
+			'Run a short preloading step before the Title Screen to warm images and audio. Reduces first-hit stutters.',
+			'bootPreloadAtBoot',
+			'bool',
+			false);
+		addOption(optBootPreload);
+
+		// Include video warm-up at boot (header read only)
+		var optBootVideo:Option = new Option('Boot Preload: Warm Videos',
+			'Also touch video files (read headers) during boot preload. No decoding, minor disk I/O.',
+			'bootPreloadVideos',
+			'bool',
+			false);
+		addOption(optBootVideo);
+
+		// Pixel UI prewarm
+		var optPixelPrewarm:Option = new Option('Prewarm Pixel UI',
+			'Preload pixel UI graphics during loading to reduce first-hit stutters.',
+			'prewarmPixelAssets',
+			'bool',
+			false);
+		addOption(optPixelPrewarm);
+
+		// Stage graphics prewarm
+		var optStagePrewarm:Option = new Option('Prewarm Stage Graphics',
+			'Preload current stage main graphics during loading. Slightly higher memory use.',
+			'prewarmStageAssets',
+			'bool',
+			false);
+		addOption(optStagePrewarm);
 
 		super();
 	}

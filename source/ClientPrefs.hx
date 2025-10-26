@@ -17,6 +17,7 @@ class ClientPrefs
 	public static var opponentStrums:Bool = true;
 	public static var showFPS:Bool = true;
 	public static var showRAM:Bool = true;
+	public static var showOS:Bool = true;
 	public static var showVideos:Bool = true;
 	public static var flashing:Bool = true;
 	public static var globalAntialiasing:Bool = true;
@@ -35,6 +36,16 @@ class ClientPrefs
 	public static var modsDirCache:Bool = true;
 	// Keep frequently used graphics persisted in GPU/bitmap cache for faster renders
 	public static var gpuPrecache:Bool = true;
+	// Wait for Inst/Voices to be preloaded before finishing LoadingState
+	public static var waitAudioPreload:Bool = true;
+	// Expand GPU prewarm to include pixel UI assets
+	public static var prewarmPixelAssets:Bool = false;
+	// Expand GPU prewarm to include current stage graphic(s)
+	public static var prewarmStageAssets:Bool = false;
+	// Run a boot-time preload state (Cache) before Title to warm images/audio (and optionally videos)
+	public static var bootPreloadAtBoot:Bool = true;
+	// Also warm video files at boot by reading headers (no decoding)
+	public static var bootPreloadVideos:Bool = true;
 	public static var cursing:Bool = true;
 	public static var violence:Bool = true;
 	public static var camZooms:Bool = true;
@@ -119,6 +130,7 @@ class ClientPrefs
 		FlxG.save.data.opponentStrums = opponentStrums;
 		FlxG.save.data.showFPS = showFPS;
 		FlxG.save.data.showRAM = showRAM;
+		FlxG.save.data.showOS = showOS;
 		FlxG.save.data.showVideos = showVideos;
 		FlxG.save.data.flashing = flashing;
 		FlxG.save.data.globalAntialiasing = globalAntialiasing;
@@ -131,6 +143,11 @@ class ClientPrefs
 		FlxG.save.data.textCacheKB = textCacheKB;
 		FlxG.save.data.modsDirCache = modsDirCache;
 		FlxG.save.data.gpuPrecache = gpuPrecache;
+		FlxG.save.data.waitAudioPreload = waitAudioPreload;
+		FlxG.save.data.prewarmPixelAssets = prewarmPixelAssets;
+		FlxG.save.data.prewarmStageAssets = prewarmStageAssets;
+		FlxG.save.data.bootPreloadAtBoot = bootPreloadAtBoot;
+		FlxG.save.data.bootPreloadVideos = bootPreloadVideos;
 		// FlxG.save.data.cursing = cursing;
 		// FlxG.save.data.violence = violence;
 		FlxG.save.data.camZooms = camZooms;
@@ -209,6 +226,10 @@ class ClientPrefs
 		{
 			showRAM = FlxG.save.data.showRAM;
 		}
+		if (FlxG.save.data.showOS != null)
+		{
+			showOS = FlxG.save.data.showOS;
+		}
 		if (FlxG.save.data.showVideos != null)
 		{
 			showVideos = FlxG.save.data.showVideos;
@@ -252,6 +273,26 @@ class ClientPrefs
 		if (FlxG.save.data.gpuPrecache != null)
 		{
 			gpuPrecache = FlxG.save.data.gpuPrecache;
+		}
+		if (FlxG.save.data.waitAudioPreload != null)
+		{
+			waitAudioPreload = FlxG.save.data.waitAudioPreload;
+		}
+		if (FlxG.save.data.prewarmPixelAssets != null)
+		{
+			prewarmPixelAssets = FlxG.save.data.prewarmPixelAssets;
+		}
+		if (FlxG.save.data.prewarmStageAssets != null)
+		{
+			prewarmStageAssets = FlxG.save.data.prewarmStageAssets;
+		}
+		if (FlxG.save.data.bootPreloadAtBoot != null)
+		{
+			bootPreloadAtBoot = FlxG.save.data.bootPreloadAtBoot;
+		}
+		if (FlxG.save.data.bootPreloadVideos != null)
+		{
+			bootPreloadVideos = FlxG.save.data.bootPreloadVideos;
 		}
 		if(FlxG.save.data.framerate != null) {
 			framerate = FlxG.save.data.framerate;
