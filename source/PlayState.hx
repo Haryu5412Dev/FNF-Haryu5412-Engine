@@ -1684,10 +1684,40 @@ class PlayState extends MusicBeatState
 
 	public function startVideo(name:String)
 		{
-			// Backward-compatible wrapper: delegate to makeVideo on camOther with a temp tag
 			#if VIDEOS_ALLOWED
 			inCutscene = true;
-			makeVideo(name, "__startVideo", camOther, null);
+			
+			var filepath:String = Paths.video(name);
+			#if sys
+			if(!FileSystem.exists(filepath))
+			#else
+			if(!OpenFlAssets.exists(filepath))
+			#end
+			{
+				FlxG.log.warn('Couldnt find video file: ' + name);
+				startAndEnd();
+				return;
+			}
+	
+			var video:FlxVideo = new FlxVideo();
+				#if (hxCodec >= "3.0.0")
+				// Recent versions
+				video.play(filepath);
+				video.onEndReached.add(function()
+				{
+					video.dispose();
+					startAndEnd();
+					return;
+				}, true);
+				#else
+				// Older versions
+				video.playVideo(filepath);
+				video.finishCallback = function()
+				{
+					startAndEnd();
+					return;
+				}
+				#end
 			#else
 			FlxG.log.warn('Platform not supported!');
 			startAndEnd();
@@ -4873,7 +4903,7 @@ class PlayState extends MusicBeatState
 	}
 
 	function noteMiss(daNote:Note):Void { 
-		holdSplashEffect.hideSplash(daNote.noteData, false);
+		holdSplashEffect.forceHideSplash(daNote.noteData, false);
 
 		notes.forEachAlive(function(note:Note) {
 			if (daNote != note && daNote.mustPress && daNote.noteData == note.noteData && daNote.isSustainNote == note.isSustainNote && Math.abs(daNote.strumTime - note.strumTime) < 1) {

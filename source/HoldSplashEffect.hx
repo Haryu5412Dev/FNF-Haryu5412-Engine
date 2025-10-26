@@ -165,6 +165,34 @@ class HoldSplashEffect extends FlxGroup {
         }
     }
 
+    /**
+     * 롱 노트가 미스났을 때처럼, 어떤 상황에서도 즉시 효과를 완전히 숨기고 정리합니다.
+     * - 애니메이션을 기다리지 않고 바로 비활성화합니다.
+     * - 내부 맵/타이머도 바로 제거합니다.
+     */
+    public function forceHideSplash(noteData:Int, isOpponent:Bool):Void {
+        if (noteData < 0 || noteData >= colors.length) return;
+        var color = colors[noteData];
+        var id = 'hold' + color + (isOpponent ? 'DAD' : 'BF');
+        var splash = holdSplashMap.get(id);
+        if (splash == null) return;
+
+        splash.visible = false;
+        // 상태를 초기 상태로 돌려놓음
+        if (splash.animation != null) splash.animation.play('hold', true);
+        splashNoteMap.remove(splash);
+        holdAliveTimers.remove(splash);
+    }
+
+    /**
+     * 특정 진영의 모든 홀드 스플래시를 즉시 숨깁니다. (디버그/안전용)
+     */
+    public function forceHideAll(isOpponent:Bool):Void {
+        for (i in 0...colors.length) {
+            forceHideSplash(i, isOpponent);
+        }
+    }
+
     override public function update(elapsed:Float):Void {
         super.update(elapsed);
         for (i in 0...4) {
