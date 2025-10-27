@@ -931,6 +931,7 @@ class PlayState extends MusicBeatState
 
 		// "GLOBAL" SCRIPTS
 		#if LUA_ALLOWED
+		util.ScriptCache.clear();
 		var filesPushed:Array<String> = [];
 		var foldersToCheck:Array<String> = [Paths.getPreloadPath('scripts/')];
 
@@ -1678,8 +1679,6 @@ class PlayState extends MusicBeatState
 		char.y += char.positionArray[1];
 	}
 
-	// I reamked all video codes shitting this FUCK  -- Haryu5412 --
-
 	// ------------------- BASE CODES -------------------
 
 	public function startVideo(name:String)
@@ -1778,7 +1777,41 @@ class PlayState extends MusicBeatState
 
 	// ------------------- CUSTOM CODES -------------------
 
-	public function makeVideo(name:String, tag:String, cam:FlxCamera, ?type:Int) // type added
+	public function preloadVideo(name:String, tag:String):Void
+	{
+		#if VIDEOS_ALLOWED
+		if (videoSprites.exists(tag)) return;
+		var filepath:String = Paths.video(name);
+		#if sys
+		if (!FileSystem.exists(filepath)) return;
+		#else
+		if (!OpenFlAssets.exists(filepath)) return;
+		#end
+
+		var vs = new FlxVideoSprite();
+		vs.alpha = 0;
+		vs.antialiasing = true;
+
+		var pausedOnce:Bool = false;
+		var handler:Void->Void = null;
+		handler = function() {
+			if (!pausedOnce) {
+				pausedOnce = true;
+				vs.pause();
+				if (vs.bitmap != null) vs.bitmap.onTextureSetup.remove(handler);
+			}
+		};
+		vs.bitmap.onTextureSetup.add(handler);
+
+		new FlxTimer().start(0, function(_) {
+			if (vs != null) vs.play(filepath, false);
+		});
+
+		videoSprites.set(tag, vs);
+		#end
+	}
+
+		public function makeVideo(name:String, tag:String, cam:Dynamic, ?type:Int) // cam can be FlxCamera or string ('camGame'|'camHUD'|'camOther')
 		{
 			#if VIDEOS_ALLOWED
 			var filepath:String = Paths.video(name);
@@ -1793,68 +1826,107 @@ class PlayState extends MusicBeatState
 				return;
 			}
 		
-			var videoSprite = new FlxVideoSprite();
-			videoSprite.play(filepath, false);
+			// Resolve camera argument (accept FlxCamera instance or string names from Lua)
+			var resolveCam = function(c:Dynamic):FlxCamera {
+				if (c == null) return FlxG.camera;
+				#if (haxe_ver >= 4.0)
+				if (Std.isOfType(c, FlxCamera)) return cast c;
+				#else
+				if (Std.is(c, FlxCamera)) return cast c;
+				#end
+				var s:String = Std.string(c).toLowerCase();
+				switch (s) {
+					case 'camhud', 'hud': return camHUD;
+					case 'camother', 'other': return camOther;
+					case 'camgame', 'game', 'default': return FlxG.camera;
+					default: return FlxG.camera;
+				}
+			};
+
+			var targetCam:FlxCamera = resolveCam(cam);
+
+			var preloaded:Bool = videoSprites.exists(tag);
+			var videoSprite:FlxVideoSprite = preloaded ? videoSprites.get(tag) : new FlxVideoSprite();
+			videoSprite.alpha = 0;
 			videoSprite.antialiasing = true;
-			videoSprite.cameras = [cam];
+			videoSprite.cameras = [targetCam];
+			if (targetCam != FlxG.camera) videoSprite.scrollFactor.set(0, 0);
 			add(videoSprite);
-		
-			if (type != null)
-			{
-				if (type == 1) 
-				{
-					videoSprite.scale.set(5.0, 5.0); // 144p
-					videoSprite.x = 512.5;
-					videoSprite.y = 250; 
-				} 
-				else if (type == 2) 
-				{
-					videoSprite.scale.set(3.0, 3.0); // 240p
-					videoSprite.x = 384; 
-					videoSprite.y = 216;
-				} 
-				else if (type == 3) 
-				{
-					videoSprite.scale.set(2.0, 2.0); // 360p
-					videoSprite.x = 320; 
-					videoSprite.y = 180; 
-				} 
-				else if (type == 4) 
-				{
-					videoSprite.scale.set(1.5, 1.5); // 480p
-					videoSprite.x = 213; 
-					videoSprite.y = 120; 
-				} 
-				else if (type == 5) 
-				{
-					videoSprite.scale.set(1.0, 1.0); // 720p
-					videoSprite.x = 0; 
-					videoSprite.y = 0; 
-				} 
-				else if (type == 6) 
-				{
-					videoSprite.scale.set(0.6667, 0.6667); // 1080p
-					videoSprite.x = -320;
-					videoSprite.y = -185;
-				} 
-				else if (type == 7) 
-				{
-					videoSprite.scale.set(0.5, 0.5); // 1440p
-					videoSprite.x = -640; 
-					videoSprite.y = -360; 
+
+			var layoutVideo = function() {
+				try {
+					if (videoSprite == null || !videoSprite.exists || cam == null) return;
+					var fw = videoSprite.frameWidth;
+					var fh = videoSprite.frameHeight;
+					var srcW:Float = fw > 1 ? fw : (videoSprite.width > 1 ? videoSprite.width : 1);
+					var srcH:Float = fh > 1 ? fh : (videoSprite.height > 1 ? videoSprite.height : 1);
+
+					var targetW:Float = FlxG.width; 
+					var targetH:Float = FlxG.height;
+
+					var eps = 1.0;
+					if (Math.abs(srcW - targetW) <= eps && Math.abs(srcH - targetH) <= eps) {
+						videoSprite.scale.set(1, 1);
+						videoSprite.updateHitbox();
+						var isGameCamExact:Bool = (cam == FlxG.camera);
+						if (!isGameCamExact) {
+							videoSprite.x = 0;
+							videoSprite.y = 0;
+						} else {
+							videoSprite.x = 0;
+							videoSprite.y = 0;
+						}
+						return;
+					}
+
+					var sx:Float = targetW / srcW;
+					var sy:Float = targetH / srcH;
+					var scale:Float = (sx > sy ? sx : sy);
+					if (!(scale > 0)) scale = 1;
+					videoSprite.scale.set(scale, scale);
+					videoSprite.updateHitbox();
+
+					var isGameCam:Bool = (targetCam == FlxG.camera);
+					if (!isGameCam) {
+						videoSprite.x = (targetW - videoSprite.width) * 0.5;
+						videoSprite.y = (targetH - videoSprite.height) * 0.5;
+					} else {
+						videoSprite.x = 0;
+						videoSprite.y = 0;
+					}
+				} catch(e:Dynamic) {
+					trace('layoutVideo error: ' + e);
 				}
-				else 
-				{
-					videoSprite.scale.set(1.0, 1.0); // 기본값
-					videoSprite.x = 0;
-					videoSprite.y = 0;
-				}
+			};
+
+			var textureHandler = function() {
+				layoutVideo();
+				FlxTween.tween(videoSprite, {alpha: 1}, 0.08, {ease: FlxEase.quadOut});
+			};
+			videoSprite.bitmap.onTextureSetup.add(textureHandler);
+
+			var resizeHandler = function(w:Int, h:Int) {
+				layoutVideo();
+			};
+			FlxG.signals.gameResized.add(resizeHandler);
+
+			if (preloaded) {
+				layoutVideo();
+				FlxTween.tween(videoSprite, {alpha: 1}, 0.08, {ease: FlxEase.quadOut});
+				videoSprite.resume();
+			} else {
+				new FlxTimer().start(0, function(_) {
+					if (videoSprite != null) videoSprite.play(filepath, false);
+				});
+				videoSprites.set(tag, videoSprite);
 			}
-		
-			videoSprites.set(tag, videoSprite);
 		
 			videoSprite.onEndReached = function()
 			{
+				if (videoSprite != null && videoSprite.bitmap != null) {
+					videoSprite.bitmap.onTextureSetup.remove(textureHandler);
+				}
+				FlxG.signals.gameResized.remove(resizeHandler);
 				if (videoSprite != null) videoSprite.stop();
 				remove(videoSprite, true);
 				videoSprites.remove(tag);
@@ -1867,8 +1939,7 @@ class PlayState extends MusicBeatState
 			return;
 			#end
 		}
-		
-	
+
 	public function setPositionVideo(tag:String, x:Float, y:Float) { // setPositionVideo added
 		var videoSprite = videoSprites.get(tag); 
 		if (videoSprite != null)
