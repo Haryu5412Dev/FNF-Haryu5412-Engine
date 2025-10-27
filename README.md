@@ -8,7 +8,7 @@
 
 ### **For Video Sprite Lua**
 
-  **-- Play video to the screen. (autoplay and auto resize video)**\n
+  **-- Play video to the screen. (autoplay and auto resize video)**
   **(camGame Video can be cause super lagging!!!! dont USE PLZZZ)**
 
 - ```lua
