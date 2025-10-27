@@ -8,21 +8,11 @@
 
 ### **For Video Sprite Lua**
 
-   -- **You can precache video using this :**
-   - ```lua
-      precacheVideo("videoName")
-      ```
-
-  **-- DEPRECATED!! OLD VideoSprite Make Code (but sometimes can be used...?)**
+  **-- Play video to the screen. (autoplay and auto resize video)**
+  **(camGame Video can be cause super lagging!!!! dont USE PLZZZ)**
 
 - ```lua
-  makeCutSenceVideo('videoName')
-  ```
-
-  **-- Play video to the screen. (autoplay)**
-
-- ```lua
-  makeVideo('videoName', 'videoTag', 'camHUD', 5) -- Added Type!! Read resolution types
+  makeVideo('videoName', 'videoTag', 'camHUD')
   ```
 
   **-- Sets Position Video**  
@@ -81,19 +71,5 @@
   ```
 
 ---
-
-### **Video Resolution Types**
-
-  **-- for this [Resolution type] -> ```makeVideo(videoName, videoTag, Cam, [Resolution Type])```**
-
-```
-  1 : (144p) - [256 x 144]
-  2 : (240p) - [426 x 240]
-  3 : (360p) - [640 x 360]
-  4 : (480p) - [854 x 480]
-  5 : (720p) - [1280 x 720]
-  6 : (1080p) - [1920 x 1080]
-  7 : (1440p) - [2560 x 1440]
-```
 
 ---
