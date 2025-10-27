@@ -17,6 +17,11 @@ class FlxVideoSprite extends FlxSprite
 	// Variables
 	public var bitmap(default, null):FlxVideo;
 	public var onEndReached:Void->Void = null;
+	/**
+	 * Relative volume for this video, 0.0 to 1.0.
+	 * Final output = FlxG.sound.volume * this.volume (and obeys global mute).
+	 */
+	public var volume:Float = 1.0;
 	private var _disposed:Bool = false;
 
 	public function new(x:Float = 0, y:Float = 0):Void
@@ -32,7 +37,9 @@ class FlxVideoSprite extends FlxSprite
 		bitmap.onOpening.add(function()
 		{
 			#if FLX_SOUND_SYSTEM
-			bitmap.volume = Std.int((FlxG.sound.muted ? 0 : 1) * (FlxG.sound.volume * 100));
+			var rel:Float = FlxG.sound.volume * volume;
+			if (rel < 0) rel = 0; else if (rel > 1) rel = 1;
+			bitmap.volume = Std.int((FlxG.sound.muted ? 0 : 1) * (rel * 100));
 			#end
 		});
 
@@ -113,7 +120,9 @@ class FlxVideoSprite extends FlxSprite
 	override public function update(elapsed:Float):Void
 	{
 		#if FLX_SOUND_SYSTEM
-		bitmap.volume = Std.int((FlxG.sound.muted ? 0 : 1) * (FlxG.sound.volume * 100));
+		var rel:Float = FlxG.sound.volume * volume;
+		if (rel < 0) rel = 0; else if (rel > 1) rel = 1;
+		bitmap.volume = Std.int((FlxG.sound.muted ? 0 : 1) * (rel * 100));
 		#end
 
 		super.update(elapsed);

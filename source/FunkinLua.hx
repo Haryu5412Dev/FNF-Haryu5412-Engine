@@ -2304,6 +2304,11 @@ class FunkinLua {
 			PlayState.instance.resumeVideo(tag);
 		});
 
+		// Set video volume (0.0 .. 1.0) for a given tag
+		Lua_helper.add_callback(lua, "setVideoVolume", function(tag:String, vol:Float) {
+			PlayState.instance.setVideoVolume(tag, vol);
+		});
+
 		Lua_helper.add_callback(lua, "setAlphaVideo", function(tag:String, alphaSet:Float) {
 			PlayState.instance.setAlphaVideo(tag, alphaSet);
 		});

@@ -146,6 +146,10 @@ class PlayState extends MusicBeatState
 	public var cutSenceSprite:FlxVideoSprite;
 	public var finnVideoSprite:FlxVideoSprite;
 	public var videoSprites:Map<String, FlxVideoSprite> = new Map();
+	// Desired state for videos to handle early pause/resume/stop calls before the texture is ready
+	public var videoDesiredState:Map<String, String> = new Map(); // values: 'playing' | 'paused' | 'stopped'
+	// Desired volume per tag (0..1). Applied immediately if sprite exists, otherwise when created.
+	public var videoDesiredVolume:Map<String, Float> = new Map();
 
 	public var BF_X:Float = 770;
 	public var BF_Y:Float = 100;
@@ -1853,6 +1857,13 @@ class PlayState extends MusicBeatState
 			if (targetCam != FlxG.camera) videoSprite.scrollFactor.set(0, 0);
 			add(videoSprite);
 
+			// Apply desired volume if any (absolute 0..1 mapped to 0..100 internal)
+			if (videoDesiredVolume.exists(tag)) {
+				var v = videoDesiredVolume.get(tag);
+				if (v < 0) v = 0; else if (v > 1) v = 1;
+				if (videoSprite.bitmap != null) videoSprite.bitmap.volume = Std.int(v * 100);
+			}
+
 			var layoutVideo = function() {
 				try {
 					if (videoSprite == null || !videoSprite.exists || cam == null) return;
@@ -1902,6 +1913,25 @@ class PlayState extends MusicBeatState
 			var textureHandler = function() {
 				layoutVideo();
 				FlxTween.tween(videoSprite, {alpha: 1}, 0.08, {ease: FlxEase.quadOut});
+				// Apply any desired state that might have been requested before readiness
+				var desired = videoDesiredState.exists(tag) ? videoDesiredState.get(tag) : null;
+				if (desired != null) {
+					switch (desired) {
+						case 'paused':
+							videoSprite.pause();
+						case 'stopped':
+							videoSprite.stop();
+							remove(videoSprite, true);
+							videoSprites.remove(tag);
+							videoDesiredState.remove(tag);
+							return;
+						default: // 'playing' or unknown
+							// ensure it's playing
+							videoSprite.resume();
+					}
+					// Clear after applying
+					videoDesiredState.remove(tag);
+				}
 			};
 			videoSprite.bitmap.onTextureSetup.add(textureHandler);
 
@@ -1913,10 +1943,37 @@ class PlayState extends MusicBeatState
 			if (preloaded) {
 				layoutVideo();
 				FlxTween.tween(videoSprite, {alpha: 1}, 0.08, {ease: FlxEase.quadOut});
-				videoSprite.resume();
+				// Honor desired state if it was set before makeVideo
+				var desired = videoDesiredState.exists(tag) ? videoDesiredState.get(tag) : null;
+				switch (desired) {
+					case 'paused':
+						videoSprite.pause();
+					case 'stopped':
+						videoSprite.stop();
+						remove(videoSprite, true);
+						videoSprites.remove(tag);
+						videoDesiredState.remove(tag);
+						FlxG.signals.gameResized.remove(resizeHandler);
+						return;
+					default:
+						videoSprite.resume();
+				}
+				if (desired != null) videoDesiredState.remove(tag);
 			} else {
 				new FlxTimer().start(0, function(_) {
-					if (videoSprite != null) videoSprite.play(filepath, false);
+					if (videoSprite != null) {
+						// If a stop was requested before first frame, don't even start
+						var desired = videoDesiredState.exists(tag) ? videoDesiredState.get(tag) : null;
+						if (desired == 'stopped') {
+							videoSprite.stop();
+							remove(videoSprite, true);
+							videoSprites.remove(tag);
+							videoDesiredState.remove(tag);
+							FlxG.signals.gameResized.remove(resizeHandler);
+							return;
+						}
+						videoSprite.play(filepath, false);
+					}
 				});
 				videoSprites.set(tag, videoSprite);
 			}
@@ -1930,6 +1987,8 @@ class PlayState extends MusicBeatState
 				if (videoSprite != null) videoSprite.stop();
 				remove(videoSprite, true);
 				videoSprites.remove(tag);
+				videoDesiredState.remove(tag);
+				videoDesiredVolume.remove(tag);
 				startAndEnd();
 				return;
 			};
@@ -1960,6 +2019,8 @@ class PlayState extends MusicBeatState
 
 	public function resumeVideo(tag:String)
 		{
+			// Record desired state first (handles calls before video is ready/created)
+			videoDesiredState.set(tag, 'playing');
 			var videoSprite = videoSprites.get(tag);
 			if(videoSprite != null)
 			{
@@ -1969,6 +2030,8 @@ class PlayState extends MusicBeatState
 
 	public function pauseVideo(tag:String)
 		{
+			// Record desired state (works even if sprite not yet ready)
+			videoDesiredState.set(tag, 'paused');
 			var videoSprite = videoSprites.get(tag);
 			if(videoSprite != null)
 			{
@@ -1978,6 +2041,8 @@ class PlayState extends MusicBeatState
 
 	public function stopVideo(tag:String)
 		{
+			// Mark as stopped so creation/play start will be skipped if pending
+			videoDesiredState.set(tag, 'stopped');
 			var videoSprite = videoSprites.get(tag);
 			if(videoSprite != null)
 			{
@@ -1986,6 +2051,18 @@ class PlayState extends MusicBeatState
 				videoSprites.remove(tag);
 			}
 		}
+
+	public function setVideoVolume(tag:String, vol:Float)
+	{
+		// Clamp to [0,1]
+		if (vol < 0) vol = 0; else if (vol > 1) vol = 1;
+		videoDesiredVolume.set(tag, vol);
+		var videoSprite = videoSprites.get(tag);
+		if (videoSprite != null)
+		{
+			if (videoSprite.bitmap != null) videoSprite.bitmap.volume = Std.int(vol * 100);
+		}
+	}
 
 	public function setAlphaVideo(tag:String, alphaSet:Float)
 	{
@@ -2009,8 +2086,6 @@ class PlayState extends MusicBeatState
 			PlayState.instance.modchartTweens.set(twtag, twn);
 		}
 	}
-
-
 
 	// Videospites are stored in a map, so you can access them by their tag
 	// and videosprites now low memory usage
