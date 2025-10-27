@@ -82,7 +82,7 @@ class PerformanceSettingsSubState extends BaseOptionsMenu {
 			'Run a short preloading step before the Title Screen to warm images and audio. Reduces first-hit stutters.',
 			'bootPreloadAtBoot',
 			'bool',
-			false);
+			true);
 		addOption(optBootPreload);
 
 		// Include video warm-up at boot (header read only)
@@ -90,7 +90,7 @@ class PerformanceSettingsSubState extends BaseOptionsMenu {
 			'Also touch video files (read headers) during boot preload. No decoding, minor disk I/O.',
 			'bootPreloadVideos',
 			'bool',
-			false);
+			true);
 		addOption(optBootVideo);
 
 		// Pixel UI prewarm
@@ -98,7 +98,7 @@ class PerformanceSettingsSubState extends BaseOptionsMenu {
 			'Preload pixel UI graphics during loading to reduce first-hit stutters.',
 			'prewarmPixelAssets',
 			'bool',
-			false);
+			true);
 		addOption(optPixelPrewarm);
 
 		// Stage graphics prewarm
@@ -106,7 +106,7 @@ class PerformanceSettingsSubState extends BaseOptionsMenu {
 			'Preload current stage main graphics during loading. Slightly higher memory use.',
 			'prewarmStageAssets',
 			'bool',
-			false);
+			true);
 		addOption(optStagePrewarm);
 
 		super();

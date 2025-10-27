@@ -8,6 +8,7 @@ import Controls;
 import Paths;
 #if sys
 import util.ThreadPool;
+import openfl.Lib;
 #end
 
 class ClientPrefs
@@ -25,13 +26,15 @@ class ClientPrefs
 	public static var lowQuality:Bool = false;
 	public static var shaders:Bool = true;
 	public static var framerate:Int = 63;
+	// Synchronize buffer swaps to display refresh to reduce tearing
+	public static var vsync:Bool = true;
 	// Experimental: Prefer FlxAnimate for Animate atlas assets where available
 	public static var useFlxAnimate:Bool = false;
 	// Performance preferences
 	// 0 means Auto (we'll pick a sensible default based on platform/CPU)
 	public static var workerThreads:Int = 0;
 	// If true, clears more caches when switching states to reduce memory footprint
-	public static var aggressiveMemory:Bool = false;
+	public static var aggressiveMemory:Bool = true;
 	// Size of the text cache (KB) used for JSON/Lua/mod text files. 0 disables.
 	public static var textCacheKB:Int = 1024;
 	// Cache directory listings for mods/* to speed up script discovery
@@ -41,9 +44,9 @@ class ClientPrefs
 	// Wait for Inst/Voices to be preloaded before finishing LoadingState
 	public static var waitAudioPreload:Bool = true;
 	// Expand GPU prewarm to include pixel UI assets
-	public static var prewarmPixelAssets:Bool = false;
+	public static var prewarmPixelAssets:Bool = true;
 	// Expand GPU prewarm to include current stage graphic(s)
-	public static var prewarmStageAssets:Bool = false;
+	public static var prewarmStageAssets:Bool = true;
 	// Run a boot-time preload state (Cache) before Title to warm images/audio (and optionally videos)
 	public static var bootPreloadAtBoot:Bool = true;
 	// Also warm video files at boot by reading headers (no decoding)
@@ -141,6 +144,7 @@ class ClientPrefs
 		FlxG.save.data.shaders = shaders;
 		FlxG.save.data.framerate = framerate;
 		FlxG.save.data.useFlxAnimate = useFlxAnimate;
+		FlxG.save.data.vsync = vsync;
 		FlxG.save.data.workerThreads = workerThreads;
 		FlxG.save.data.aggressiveMemory = aggressiveMemory;
 		FlxG.save.data.textCacheKB = textCacheKB;
@@ -261,6 +265,10 @@ class ClientPrefs
 		{
 			workerThreads = FlxG.save.data.workerThreads;
 		}
+        if (FlxG.save.data.vsync != null)
+        {
+            vsync = FlxG.save.data.vsync;
+        }
 		if (FlxG.save.data.aggressiveMemory != null)
 		{
 			aggressiveMemory = FlxG.save.data.aggressiveMemory;
@@ -481,6 +489,13 @@ class ClientPrefs
 		// Initialize thread pool according to preference (no-op on targets without threads)
 		#if sys
 		ThreadPool.init(workerThreads);
+		// Apply V-Sync to the native window when available
+		try {
+			var win:Dynamic = Lib.application.window;
+			if (win != null && Reflect.hasField(win, "vsync")) {
+				Reflect.setProperty(win, "vsync", vsync);
+			}
+		} catch (_:Dynamic) {}
 		#end
 	}
 }

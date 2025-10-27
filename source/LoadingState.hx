@@ -154,7 +154,7 @@ class LoadingState extends MusicBeatState
 			} catch (e:Dynamic) {}
 		});
 
-		// 2) Prime dialogue.json text if present (Paths text cache)
+		// Prime dialogue.json text if present (Paths text cache)
 		addStep('dialogue', function() {
 			var songName = Paths.formatToSongPath(PlayState.SONG.song);
 			var filePath = 'data/' + songName + '/dialogue.json';
@@ -179,7 +179,7 @@ class LoadingState extends MusicBeatState
 			#end
 		});
 
-		// 4) Preload Inst/Voices; optionally gate countdown until done
+		// Preload Inst/Voices; optionally gate countdown until done
 		if (ClientPrefs.waitAudioPreload) {
 			addStep('audio', function() {
 				try {

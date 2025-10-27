@@ -74,6 +74,24 @@ class GraphicsSettingsSubState extends BaseOptionsMenu
 		option.onChange = onChangeFramerate;
 		#end
 
+		// V-Sync toggle
+		var optVsync:Option = new Option('V-Sync',
+			'Synchronize frame swaps to display refresh to reduce tearing. May add slight input latency.',
+			'vsync',
+			'bool',
+			true);
+		optVsync.onChange = function() {
+			#if sys
+			try {
+				var win:Dynamic = openfl.Lib.application.window;
+				if (win != null && Reflect.hasField(win, "vsync")) {
+					Reflect.setProperty(win, "vsync", ClientPrefs.vsync);
+				}
+			} catch (_:Dynamic) {}
+			#end
+		};
+		addOption(optVsync);
+
 		var option:Option = new Option('Use FlxAnimate (Experimental)',
 			'Use FlxAnimate for Animate CC atlases when available. Requires library; may increase compatibility and reduce memory.','useFlxAnimate','bool',false);
 		addOption(option);
