@@ -2263,11 +2263,11 @@ class FunkinLua {
 			#end
 		});
 
-		Lua_helper.add_callback(lua, "makeVideo", function(name:String, tag:String, camera:String, ?type:Int) {
+		Lua_helper.add_callback(lua, "makeVideo", function(name:String, tag:String, camera:String) {
 			#if VIDEOS_ALLOWED
 			if(FileSystem.exists(Paths.video(name))) {
 				var cam:FlxCamera = cameraFromString(camera);
-				PlayState.instance.makeVideo(name, tag, cam, type);
+				PlayState.instance.makeVideo(name, tag, cam);
 				return true;
 			} else {
 				luaTrace('makeVideo: Video file not found: ' + name, false, false, FlxColor.RED);

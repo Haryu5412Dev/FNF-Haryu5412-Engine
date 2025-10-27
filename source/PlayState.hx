@@ -1811,7 +1811,7 @@ class PlayState extends MusicBeatState
 		#end
 	}
 
-		public function makeVideo(name:String, tag:String, cam:Dynamic, ?type:Int) // cam can be FlxCamera or string ('camGame'|'camHUD'|'camOther')
+		public function makeVideo(name:String, tag:String, cam:Dynamic) // cam can be FlxCamera or string ('camGame'|'camHUD'|'camOther')
 		{
 			#if VIDEOS_ALLOWED
 			var filepath:String = Paths.video(name);
