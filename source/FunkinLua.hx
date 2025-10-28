@@ -1563,9 +1563,6 @@ class FunkinLua {
 		Lua_helper.add_callback(lua, "precacheMusic", function(name:String) {
 			CoolUtil.precacheMusic(name);
 		});
-		Lua_helper.add_callback(lua, "precacheVideo", function(name:String) {
-			CoolUtil.precacheVideo(name);
-		});
 		Lua_helper.add_callback(lua, "triggerEvent", function(name:String, arg1:Dynamic, arg2:Dynamic) {
 			var value1:String = arg1;
 			var value2:String = arg2;
@@ -2266,6 +2263,8 @@ class FunkinLua {
 		Lua_helper.add_callback(lua, "makeVideo", function(name:String, tag:String, camera:String) {
 			#if VIDEOS_ALLOWED
 			if(FileSystem.exists(Paths.video(name))) {
+				// Default tag to name when nil/empty passed from Lua
+				if (tag == null || tag.length == 0) tag = name;
 				var cam:FlxCamera = cameraFromString(camera);
 				PlayState.instance.makeVideo(name, tag, cam);
 				return true;
@@ -2281,6 +2280,24 @@ class FunkinLua {
 				PlayState.instance.startCountdown();
 			}
 			return true;
+			#end
+		});
+
+		// Preload video into memory and warm up GPU texture (avoid hitch on first display)
+		Lua_helper.add_callback(lua, "precacheVideo", function(name:String, tag:String) {
+			#if VIDEOS_ALLOWED
+			if(FileSystem.exists(Paths.video(name))) {
+				// Default tag to name when nil/empty passed from Lua
+				if (tag == null || tag.length == 0) tag = name;
+				PlayState.instance.precacheVideo(name, tag);
+				return true;
+			} else {
+				luaTrace('precacheVideo: Video file not found: ' + name, false, false, FlxColor.RED);
+			}
+			return false;
+
+			#else
+			return false;
 			#end
 		});
 

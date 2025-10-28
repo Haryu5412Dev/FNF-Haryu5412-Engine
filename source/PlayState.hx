@@ -1781,9 +1781,12 @@ class PlayState extends MusicBeatState
 
 	// ------------------- CUSTOM CODES -------------------
 
-	public function preloadVideo(name:String, tag:String):Void
+	public function precacheVideo(name:String, ?tag:String):Void
 	{
 		#if VIDEOS_ALLOWED
+		// Allow optional/empty tag: default to name
+		if (tag == null || tag.length == 0) tag = name;
+		// Already preloaded
 		if (videoSprites.exists(tag)) return;
 		var filepath:String = Paths.video(name);
 		#if sys
@@ -1792,11 +1795,19 @@ class PlayState extends MusicBeatState
 		if (!OpenFlAssets.exists(filepath)) return;
 		#end
 
+		// Create hidden sprite and start decoding immediately
 		var vs = new FlxVideoSprite();
 		vs.alpha = 0;
 		vs.antialiasing = true;
+		// Assign a camera if available (optional)
+		if (camOther != null) {
+			vs.cameras = [camOther];
+			vs.scrollFactor.set(0, 0);
+		}
 
+		// Pause on first texture setup (ensures a decoded frame + GL texture exist)
 		var pausedOnce:Bool = false;
+		var handlerAdded:Bool = false;
 		var handler:Void->Void = null;
 		handler = function() {
 			if (!pausedOnce) {
@@ -1805,8 +1816,21 @@ class PlayState extends MusicBeatState
 				if (vs.bitmap != null) vs.bitmap.onTextureSetup.remove(handler);
 			}
 		};
-		vs.bitmap.onTextureSetup.add(handler);
+		// Try to attach immediately if bitmap is available; otherwise poll briefly
+		if (vs.bitmap != null) {
+			vs.bitmap.onTextureSetup.add(handler);
+			handlerAdded = true;
+		} else {
+			new FlxTimer().start(0.01, function(t:FlxTimer) {
+				if (vs != null && vs.bitmap != null && !handlerAdded) {
+					vs.bitmap.onTextureSetup.add(handler);
+					handlerAdded = true;
+					t.cancel();
+				}
+			}, 50);
+		}
 
+		// Start playback next tick so hxCodec starts decoding on its own thread
 		new FlxTimer().start(0, function(_) {
 			if (vs != null) vs.play(filepath, false);
 		});
@@ -1818,6 +1842,8 @@ class PlayState extends MusicBeatState
 		public function makeVideo(name:String, tag:String, cam:Dynamic) // cam can be FlxCamera or string ('camGame'|'camHUD'|'camOther')
 		{
 			#if VIDEOS_ALLOWED
+			// Allow optional/empty tag: default to name
+			if (tag == null || tag.length == 0) tag = name;
 			var filepath:String = Paths.video(name);
 			#if sys
 			if (!FileSystem.exists(filepath))
@@ -1933,7 +1959,6 @@ class PlayState extends MusicBeatState
 					videoDesiredState.remove(tag);
 				}
 			};
-			videoSprite.bitmap.onTextureSetup.add(textureHandler);
 
 			var resizeHandler = function(w:Int, h:Int) {
 				layoutVideo();
@@ -1960,6 +1985,10 @@ class PlayState extends MusicBeatState
 				}
 				if (desired != null) videoDesiredState.remove(tag);
 			} else {
+					// When not preloaded, wait for texture setup to fade-in and apply desired state
+					if (videoSprite != null && videoSprite.bitmap != null) {
+						videoSprite.bitmap.onTextureSetup.add(textureHandler);
+					}
 				new FlxTimer().start(0, function(_) {
 					if (videoSprite != null) {
 						// If a stop was requested before first frame, don't even start
