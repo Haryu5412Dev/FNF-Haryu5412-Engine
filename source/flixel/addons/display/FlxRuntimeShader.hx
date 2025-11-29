@@ -533,7 +533,7 @@ class FlxRuntimeShader extends FlxShader
 		@:privateAccess
 		if (prop == null)
 		{
-			trace('[WARN] Shader float property ${name} not found.');
+			// trace('[WARN] Shader float property ${name} not found.');
 			return;
 		}
 		prop.value = [value];
