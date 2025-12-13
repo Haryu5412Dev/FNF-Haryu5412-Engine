@@ -26,6 +26,8 @@ import flash.geom.Rectangle;
 import flixel.ui.FlxButton;
 import flixel.FlxBasic;
 import sys.io.File;
+import util.FSUtil;
+import util.ScriptCache;
 /*import haxe.zip.Reader;
 import haxe.zip.Entry;
 import haxe.zip.Uncompress;
@@ -460,6 +462,10 @@ class ModsMenuState extends MusicBeatState
 		var path:String = 'modsList.txt';
 		File.saveContent(path, fileStr);
 		Paths.pushGlobalMods();
+		// mods list changed: invalidate caches so the next state sees up-to-date files
+		Paths.invalidateModsCaches();
+		FSUtil.clearCache();
+		ScriptCache.clear();
 	}
 
 	var noModsSine:Float = 0;

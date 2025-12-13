@@ -111,12 +111,37 @@ class Paths
 		localTrackedAssets = [];
 		openfl.Assets.cache.clear("songs");
 
-		// Also clear our internal small caches
-		clearTextCache();
-		clearDirCache();
+		// Internal caches (text/dir/mod path) are useful for load-time speed.
+		// Only clear them when explicitly requested.
+		if (cleanUnused) {
+			clearTextCache();
+			clearDirCache();
+			clearExistsCache();
+			_clearModFoldersCache();
+			clearNestedModsCache();
+		}
 	}
 
 	static public var currentModDirectory:String = '';
+	public static function setCurrentModDirectory(dir:String):Void {
+		var next = (dir != null) ? dir : '';
+		if (next == currentModDirectory) return;
+		currentModDirectory = next;
+		// Changing mod root affects path resolution and directory scans.
+		_clearModFoldersCache();
+		clearNestedModsCache();
+		clearExistsCache();
+		clearDirCache();
+	}
+
+	public static function invalidateModsCaches():Void {
+		// Call this after enabling/disabling/reordering mods (modsList.txt changes)
+		_clearModFoldersCache();
+		clearNestedModsCache();
+		clearExistsCache();
+		clearDirCache();
+		clearTextCache();
+	}
 	static public var currentLevel:String;
 	static public function setCurrentLevel(name:String)
 	{
@@ -159,14 +184,14 @@ class Paths
 		for (mod in getGlobalMods()) roots.push(mod);
 		for (root in roots) {
 			var basePath = mods(root);
-			if (!FileSystem.exists(basePath) || !FileSystem.isDirectory(basePath)) continue;
+			if (!sysExists(basePath) || !FileSystem.isDirectory(basePath)) continue;
 			var entries = cachedReadDirectory(basePath);
 			for (sub in entries) {
 				var subPath = basePath + '/' + sub;
 				if (!FileSystem.isDirectory(subPath)) continue;
 				// Treat only valid nested mods (those having a pack.json)
 				var packPath = subPath + '/pack.json';
-				if (FileSystem.exists(packPath)) {
+				if (sysExists(packPath)) {
 					names.push(root + '/' + sub);
 				}
 			}
@@ -247,7 +272,48 @@ class Paths
 
 	#if sys
 	static var _dirCacheEnabled:Bool = true;
-	static var _dirCache:Map<String, { list:Array<String>, stamp:Float }> = new Map();
+	static var _dirCache:Map<String, Array<String>> = new Map();
+	// File existence cache (speeds up repeated FileSystem.exists checks, especially negatives)
+	static var _existsCacheEnabled:Bool = true;
+	static var _existsCache:Map<String, Int> = new Map(); // 1=true, 0=false
+	static var _existsCacheOrder:Array<String> = [];
+	static var _existsCacheMax:Int = 40000;
+
+	public static function setExistsCacheEnabled(enabled:Bool):Void {
+		_existsCacheEnabled = enabled;
+		if (!enabled) clearExistsCache();
+	}
+
+	public static function clearExistsCache():Void {
+		_existsCache = new Map();
+		_existsCacheOrder = [];
+	}
+
+	static inline function _putExistsCache(path:String, exists:Bool):Void {
+		if (!_existsCacheEnabled) return;
+		if (_existsCache.exists(path)) return;
+		_existsCache.set(path, exists ? 1 : 0);
+		_existsCacheOrder.push(path);
+		while (_existsCacheOrder.length > _existsCacheMax) {
+			var oldest = _existsCacheOrder.shift();
+			_existsCache.remove(oldest);
+		}
+	}
+
+	public static function sysExists(path:String):Bool {
+		if (!_existsCacheEnabled) {
+			return FileSystem.exists(path);
+		}
+		var cached = _existsCache.get(path);
+		if (cached != null) return cached == 1;
+		var exists = false;
+		try {
+			exists = FileSystem.exists(path);
+		} catch (_:Dynamic) {}
+		_putExistsCache(path, exists);
+		return exists;
+	}
+
 	public static function setDirCacheEnabled(enabled:Bool):Void {
 		_dirCacheEnabled = enabled;
 		if (!enabled) clearDirCache();
@@ -255,27 +321,23 @@ class Paths
 	static function clearDirCache():Void {
 		_dirCache = new Map();
 	}
-	static function getDirStamp(path:String):Float {
-		try {
-			return FileSystem.stat(path).mtime.getTime();
-		} catch (e:Dynamic) {}
-		return -1;
-	}
 	public static function cachedReadDirectory(path:String):Array<String> {
 		if (!_dirCacheEnabled) {
 			return FileSystem.readDirectory(path);
 		}
-		var stamp = getDirStamp(path);
-		var v = _dirCache.get(path);
-		if (v != null && v.stamp == stamp) return v.list;
+		var cached = _dirCache.get(path);
+		if (cached != null) return cached;
 		var list = FileSystem.readDirectory(path);
-		_dirCache.set(path, { list: list, stamp: stamp });
+		_dirCache.set(path, list);
 		return list;
 	}
 	#else
 	static inline function clearDirCache():Void {}
 	public static inline function setDirCacheEnabled(enabled:Bool):Void {}
 	public static inline function cachedReadDirectory(path:String):Array<String> { return []; }
+	public static inline function setExistsCacheEnabled(enabled:Bool):Void {}
+	public static inline function clearExistsCache():Void {}
+	public static inline function sysExists(path:String):Bool { return false; }
 	#end
 
 	static public function getLibraryPath(file:String, library = "preload")
@@ -331,7 +393,7 @@ class Paths
 	{
 		#if MODS_ALLOWED
 		var file:String = modsVideo(key);
-		if(FileSystem.exists(file)) {
+		if(sysExists(file)) {
 			return file;
 		}
 		#end
@@ -380,7 +442,7 @@ class Paths
 	{
 		#if sys
 		#if MODS_ALLOWED
-		if (!ignoreMods && FileSystem.exists(modFolders(key))) {
+		if (!ignoreMods && sysExists(modFolders(key))) {
 			var p = modFolders(key);
 			var cached = _textCache.get(p);
 			if (cached != null) return cached;
@@ -390,7 +452,7 @@ class Paths
 		}
 		#end
 
-		if (FileSystem.exists(getPreloadPath(key))) {
+		if (sysExists(getPreloadPath(key))) {
 			var p = getPreloadPath(key);
 			var cached = _textCache.get(p);
 			if (cached != null) return cached;
@@ -404,7 +466,7 @@ class Paths
 			var levelPath:String = '';
 			if(currentLevel != 'shared') {
 				levelPath = getLibraryPathForce(key, currentLevel);
-				if (FileSystem.exists(levelPath)) {
+				if (sysExists(levelPath)) {
 					var cached = _textCache.get(levelPath);
 					if (cached != null) return cached;
 					var txt = File.getContent(levelPath);
@@ -414,7 +476,7 @@ class Paths
 			}
 
 			levelPath = getLibraryPathForce(key, 'shared');
-			if (FileSystem.exists(levelPath)) {
+			if (sysExists(levelPath)) {
 				var cached = _textCache.get(levelPath);
 				if (cached != null) return cached;
 				var txt = File.getContent(levelPath);
@@ -435,7 +497,7 @@ class Paths
 	{
 		#if MODS_ALLOWED
 		var file:String = modsFont(key);
-		if(FileSystem.exists(file)) {
+		if(sysExists(file)) {
 			return file;
 		}
 		#end
@@ -445,7 +507,7 @@ class Paths
 	inline static public function fileExists(key:String, type:AssetType, ?ignoreMods:Bool = false, ?library:String)
 	{
 		#if MODS_ALLOWED
-		if(FileSystem.exists(mods(currentModDirectory + '/' + key)) || FileSystem.exists(mods(key))) {
+		if(sysExists(mods(currentModDirectory + '/' + key)) || sysExists(mods(key))) {
 			return true;
 		}
 		#end
@@ -461,7 +523,7 @@ class Paths
 		#if MODS_ALLOWED
 		var imageLoaded:FlxGraphic = returnGraphic(key);
 		var xmlExists:Bool = false;
-		if(FileSystem.exists(modsXml(key))) {
+		if(sysExists(modsXml(key))) {
 			xmlExists = true;
 		}
 
@@ -477,7 +539,7 @@ class Paths
 		#if MODS_ALLOWED
 		var imageLoaded:FlxGraphic = returnGraphic(key);
 		var txtExists:Bool = false;
-		if(FileSystem.exists(modsTxt(key))) {
+		if(sysExists(modsTxt(key))) {
 			txtExists = true;
 		}
 
@@ -500,7 +562,7 @@ class Paths
 	public static function returnGraphic(key:String, ?library:String) {
 		#if MODS_ALLOWED
 		var modKey:String = modsImages(key);
-		if(FileSystem.exists(modKey)) {
+		if(sysExists(modKey)) {
 			if(!currentTrackedAssets.exists(modKey)) {
 				var newBitmap:BitmapData = BitmapData.fromFile(modKey);
 				var newGraphic:FlxGraphic = FlxGraphic.fromBitmapData(newBitmap, false, modKey);
@@ -531,7 +593,7 @@ class Paths
 	public static function returnSound(path:String, key:String, ?library:String) {
 		#if MODS_ALLOWED
 		var file:String = modsSounds(path, key);
-		if(FileSystem.exists(file)) {
+		if(sysExists(file)) {
 			if(!currentTrackedSounds.exists(file)) {
 				currentTrackedSounds.set(file, Sound.fromFile(file));
 			}
@@ -619,7 +681,7 @@ class Paths
 
 		if(currentModDirectory != null && currentModDirectory.length > 0) {
 			var fileToCheck:String = mods(currentModDirectory + '/' + key);
-			if(FileSystem.exists(fileToCheck)) {
+			if(sysExists(fileToCheck)) {
 				_modFoldersCache.set(cacheKey, fileToCheck);
 				return fileToCheck;
 			}
@@ -627,7 +689,7 @@ class Paths
 
 		for(mod in getGlobalMods()){
 			var fileToCheck:String = mods(mod + '/' + key);
-			if(FileSystem.exists(fileToCheck)) {
+			if(sysExists(fileToCheck)) {
 				_modFoldersCache.set(cacheKey, fileToCheck);
 				return fileToCheck;
 			}
@@ -638,7 +700,7 @@ class Paths
 		ensureNestedModsComputed();
 		for (nested in (_nestedModNames == null ? [] : _nestedModNames)) {
 			var nestedCheck = mods(nested + '/' + key);
-			if (FileSystem.exists(nestedCheck)) {
+			if (sysExists(nestedCheck)) {
 				_modFoldersCache.set(cacheKey, nestedCheck);
 				return nestedCheck;
 			}
@@ -657,10 +719,13 @@ class Paths
 	static public function pushGlobalMods() // prob a better way to do this but idc
 	{
 		globalMods = [];
+		// modsList.txt and pack.json checks must reflect current disk state
+		clearExistsCache();
+		clearDirCache();
 		_clearModFoldersCache();
 		clearNestedModsCache();
 		var path:String = 'modsList.txt';
-		if(FileSystem.exists(path))
+		if(sysExists(path))
 		{
 			var list:Array<String> = CoolUtil.coolTextFile(path);
 			for (i in list)
@@ -670,7 +735,7 @@ class Paths
 				{
 					var folder = dat[0];
 					var path = Paths.mods(folder + '/pack.json');
-					if(FileSystem.exists(path)) {
+					if(sysExists(path)) {
 						try{
 							var rawJson:String = File.getContent(path);
 							if(rawJson != null && rawJson.length > 0) {
@@ -691,7 +756,7 @@ class Paths
 	static public function getModDirectories():Array<String> {
 		var list:Array<String> = [];
 		var modsFolder:String = mods();
-		if(FileSystem.exists(modsFolder)) {
+		if(sysExists(modsFolder)) {
 			// Use cached directory listing for performance on sys targets
 			var entries:Array<String> = #if sys cachedReadDirectory(modsFolder) #else FileSystem.readDirectory(modsFolder) #end;
 			for (folder in entries) {

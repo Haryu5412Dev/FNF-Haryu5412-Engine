@@ -51,7 +51,7 @@ class LoadingState extends MusicBeatState
 	{
 		// Optional aggressive cleanup to lower memory before loading heavy assets
 		if (ClientPrefs.aggressiveMemory) {
-			try { Paths.clearStoredMemory(true); } catch (_:Dynamic) {}
+			try { Paths.clearStoredMemory(); } catch (_:Dynamic) {}
 		}
 
 		var bg:FlxSprite = new FlxSprite(0, 0).makeGraphic(FlxG.width, FlxG.height, 0xffcaff4d);
@@ -165,12 +165,11 @@ class LoadingState extends MusicBeatState
 			#if sys
 			var list:Array<String> = [];
 			var songName = Paths.formatToSongPath(PlayState.SONG.song);
+			// Keep this lightweight: only prefetch what this song is most likely to need.
 			if (PlayState.SONG.stage != null && PlayState.SONG.stage.length > 0) {
-				list.push('mods/stages/' + PlayState.SONG.stage + '.lua');
+				var stagePath = 'mods/stages/' + PlayState.SONG.stage + '.lua';
+				if (FileSystem.exists(stagePath)) list.push(stagePath);
 			}
-			list = list.concat(util.FSUtil.listFilesWithExt('mods/scripts', 'lua'));
-			list = list.concat(util.FSUtil.listFilesWithExt('mods/custom_events', 'lua'));
-			list = list.concat(util.FSUtil.listFilesWithExt('mods/custom_notetypes', 'lua'));
 			list = list.concat(util.FSUtil.listFilesWithExt('mods/data/' + songName, 'lua'));
 			if (list.length > 0) {
 				try { util.ScriptCache.preload(list); } catch (_:Dynamic) {}

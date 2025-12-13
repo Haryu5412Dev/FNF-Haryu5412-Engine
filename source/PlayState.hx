@@ -150,6 +150,9 @@ class PlayState extends MusicBeatState
 	public var videoDesiredState:Map<String, String> = new Map(); // values: 'playing' | 'paused' | 'stopped'
 	// Desired volume per tag (0..1). Applied immediately if sprite exists, otherwise when created.
 	public var videoDesiredVolume:Map<String, Float> = new Map();
+	// Internal: keep track of handlers so stop/end can safely unhook them (prevents crashes/leaks)
+	public var videoTextureHandlers:Map<String, Dynamic> = new Map();
+	public var videoResizeHandlers:Map<String, Dynamic> = new Map();
 
 	public var BF_X:Float = 770;
 	public var BF_Y:Float = 100;
@@ -935,7 +938,6 @@ class PlayState extends MusicBeatState
 
 		// "GLOBAL" SCRIPTS
 		#if LUA_ALLOWED
-		util.ScriptCache.clear();
 		var filesPushed:Array<String> = [];
 		var foldersToCheck:Array<String> = [Paths.getPreloadPath('scripts/')];
 
@@ -1769,6 +1771,8 @@ class PlayState extends MusicBeatState
 						{
 								cutSenceSprite.stop();
 								remove(cutSenceSprite);
+								cutSenceSprite.destroy();
+								cutSenceSprite = null;
 							startAndEnd();
 							return;
 						}
@@ -1875,15 +1879,21 @@ class PlayState extends MusicBeatState
 
 			var targetCam:FlxCamera = resolveCam(cam);
 
-			var preloaded:Bool = videoSprites.exists(tag);
-			var videoSprite:FlxVideoSprite = preloaded ? videoSprites.get(tag) : new FlxVideoSprite();
+			var preloadedSprite:FlxVideoSprite = videoSprites.exists(tag) ? videoSprites.get(tag) : null;
+			// If a "preloaded" sprite lost its bitmap (e.g. ended/disposed while hidden), treat it as not preloaded.
+			if (preloadedSprite != null && preloadedSprite.bitmap == null) {
+				videoSprites.remove(tag);
+				preloadedSprite = null;
+			}
+			var preloaded:Bool = (preloadedSprite != null);
+			var videoSprite:FlxVideoSprite = preloaded ? preloadedSprite : new FlxVideoSprite();
 			videoSprite.alpha = 0;
 			videoSprite.antialiasing = true;
 			videoSprite.cameras = [targetCam];
 			if (targetCam != FlxG.camera) videoSprite.scrollFactor.set(0, 0);
 			add(videoSprite);
 
-			// Apply desired volume if any (absolute 0..1 mapped to 0..100 internal)
+			// Apply desired volume if any
 			if (videoDesiredVolume.exists(tag)) {
 				var v = videoDesiredVolume.get(tag);
 				if (v < 0) v = 0; else if (v > 1) v = 1;
@@ -1948,8 +1958,14 @@ class PlayState extends MusicBeatState
 						case 'stopped':
 							videoSprite.stop();
 							remove(videoSprite, true);
+							videoSprite.destroy();
 							videoSprites.remove(tag);
 							videoDesiredState.remove(tag);
+							videoDesiredVolume.remove(tag);
+							var rh:Dynamic = videoResizeHandlers.get(tag);
+							if (rh != null) FlxG.signals.gameResized.remove(rh);
+							videoResizeHandlers.remove(tag);
+							videoTextureHandlers.remove(tag);
 							return;
 						default: // 'playing' or unknown
 							// ensure it's playing
@@ -1964,6 +1980,8 @@ class PlayState extends MusicBeatState
 				layoutVideo();
 			};
 			FlxG.signals.gameResized.add(resizeHandler);
+			videoTextureHandlers.set(tag, textureHandler);
+			videoResizeHandlers.set(tag, resizeHandler);
 
 			if (preloaded) {
 				layoutVideo();
@@ -1976,9 +1994,13 @@ class PlayState extends MusicBeatState
 					case 'stopped':
 						videoSprite.stop();
 						remove(videoSprite, true);
+						videoSprite.destroy();
 						videoSprites.remove(tag);
 						videoDesiredState.remove(tag);
+						videoDesiredVolume.remove(tag);
 						FlxG.signals.gameResized.remove(resizeHandler);
+						videoResizeHandlers.remove(tag);
+						videoTextureHandlers.remove(tag);
 						return;
 					default:
 						videoSprite.resume();
@@ -1996,9 +2018,13 @@ class PlayState extends MusicBeatState
 						if (desired == 'stopped') {
 							videoSprite.stop();
 							remove(videoSprite, true);
+							videoSprite.destroy();
 							videoSprites.remove(tag);
 							videoDesiredState.remove(tag);
+							videoDesiredVolume.remove(tag);
 							FlxG.signals.gameResized.remove(resizeHandler);
+							videoResizeHandlers.remove(tag);
+							videoTextureHandlers.remove(tag);
 							return;
 						}
 						videoSprite.play(filepath, false);
@@ -2009,12 +2035,17 @@ class PlayState extends MusicBeatState
 		
 			videoSprite.onEndReached = function()
 			{
-				if (videoSprite != null && videoSprite.bitmap != null) {
-					videoSprite.bitmap.onTextureSetup.remove(textureHandler);
+				var th:Dynamic = videoTextureHandlers.get(tag);
+				if (videoSprite != null && videoSprite.bitmap != null && th != null) {
+					videoSprite.bitmap.onTextureSetup.remove(th);
 				}
-				FlxG.signals.gameResized.remove(resizeHandler);
+				var rh:Dynamic = videoResizeHandlers.get(tag);
+				if (rh != null) FlxG.signals.gameResized.remove(rh);
+				videoTextureHandlers.remove(tag);
+				videoResizeHandlers.remove(tag);
 				if (videoSprite != null) videoSprite.stop();
 				remove(videoSprite, true);
+				if (videoSprite != null) videoSprite.destroy();
 				videoSprites.remove(tag);
 				videoDesiredState.remove(tag);
 				videoDesiredVolume.remove(tag);
@@ -2075,10 +2106,22 @@ class PlayState extends MusicBeatState
 			var videoSprite = videoSprites.get(tag);
 			if(videoSprite != null)
 			{
+				var th:Dynamic = videoTextureHandlers.get(tag);
+				if (videoSprite.bitmap != null && th != null) {
+					videoSprite.bitmap.onTextureSetup.remove(th);
+				}
+				var rh:Dynamic = videoResizeHandlers.get(tag);
+				if (rh != null) FlxG.signals.gameResized.remove(rh);
+				videoTextureHandlers.remove(tag);
+				videoResizeHandlers.remove(tag);
 				videoSprite.stop();
 				remove(videoSprite, true);
+				videoSprite.destroy();
 				videoSprites.remove(tag);
+				// Fully stopped: clear pending flags so it can be created/played again later.
+				videoDesiredState.remove(tag);
 			}
+			videoDesiredVolume.remove(tag);
 		}
 
 	public function setVideoVolume(tag:String, vol:Float)

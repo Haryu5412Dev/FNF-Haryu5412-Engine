@@ -46,7 +46,7 @@
 
 	<classpath name="source" />
 	<!-- Local overrides for hxCodec classes to fix video end/dispose race issues -->
-	<classpath name="Edited Haxelibs" />
+	<classpath name="EditedHaxelibs" />
 	
 	<!-- PSYCH ENGINE CUSTOMIZATION -->
 	<define name="MODS_ALLOWED" if="desktop" />

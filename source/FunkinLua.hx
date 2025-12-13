@@ -95,6 +95,11 @@ class FunkinLua {
 			var result:Dynamic = 0;
 			#if sys
 			var cached = util.ScriptCache.get(script);
+			if (cached == null) {
+				// Populate cache on-demand to reduce disk reads on subsequent loads
+				util.ScriptCache.preload([script]);
+				cached = util.ScriptCache.get(script);
+			}
 			if (cached != null) {
 				result = LuaL.dostring(lua, cached);
 			} else {
@@ -2195,7 +2200,7 @@ class FunkinLua {
 			luaTrace('startDialogue: Trying to load dialogue: ' + path);
 
 			#if MODS_ALLOWED
-			if(FileSystem.exists(path))
+			if(Paths.sysExists(path))
 			#else
 			if(Assets.exists(path))
 			#end
@@ -2220,7 +2225,7 @@ class FunkinLua {
 		});
 		Lua_helper.add_callback(lua, "startVideo", function(videoFile:String) {
 			#if VIDEOS_ALLOWED
-			if(FileSystem.exists(Paths.video(videoFile))) {
+			if(Paths.sysExists(Paths.video(videoFile))) {
 				PlayState.instance.startVideo(videoFile);
 				return true;
 			} else {
@@ -2242,7 +2247,7 @@ class FunkinLua {
 
 		Lua_helper.add_callback(lua, "makeCutSenceVideo", function(videoFile:String) {
 			#if VIDEOS_ALLOWED
-			if(FileSystem.exists(Paths.video(videoFile))) {
+			if(Paths.sysExists(Paths.video(videoFile))) {
 				PlayState.instance.makeCutSenceVideo(videoFile);
 				return true;
 			} else {
@@ -2262,7 +2267,7 @@ class FunkinLua {
 
 		Lua_helper.add_callback(lua, "makeVideo", function(name:String, tag:String, camera:String) {
 			#if VIDEOS_ALLOWED
-			if(FileSystem.exists(Paths.video(name))) {
+			if(Paths.sysExists(Paths.video(name))) {
 				// Default tag to name when nil/empty passed from Lua
 				if (tag == null || tag.length == 0) tag = name;
 				var cam:FlxCamera = cameraFromString(camera);
@@ -2286,7 +2291,7 @@ class FunkinLua {
 		// Preload video into memory and warm up GPU texture (avoid hitch on first display)
 		Lua_helper.add_callback(lua, "precacheVideo", function(name:String, tag:String) {
 			#if VIDEOS_ALLOWED
-			if(FileSystem.exists(Paths.video(name))) {
+			if(Paths.sysExists(Paths.video(name))) {
 				// Default tag to name when nil/empty passed from Lua
 				if (tag == null || tag.length == 0) tag = name;
 				PlayState.instance.precacheVideo(name, tag);
@@ -2677,15 +2682,15 @@ class FunkinLua {
 			#if MODS_ALLOWED
 			if(absolute)
 			{
-				return FileSystem.exists(filename);
+				return Paths.sysExists(filename);
 			}
 
 			var path:String = Paths.modFolders(filename);
-			if(FileSystem.exists(path))
+			if(Paths.sysExists(path))
 			{
 				return true;
 			}
-			return FileSystem.exists(Paths.getPath('assets/$filename', TEXT));
+			return Paths.sysExists(Paths.getPath('assets/$filename', TEXT));
 			#else
 			if(absolute)
 			{
@@ -2894,13 +2899,13 @@ class FunkinLua {
 		Lua_helper.add_callback(lua, "directoryFileList", function(folder:String) {
 			var list:Array<String> = [];
 			#if sys
-			if(FileSystem.exists(folder)) {
-				for (folder in FileSystem.readDirectory(folder)) {
-					if (!list.contains(folder)) {
-						list.push(folder);
-					}
+			try {
+				if (FileSystem.exists(folder) && FileSystem.isDirectory(folder)) {
+					// Use cached directory listing to reduce IO when Lua polls folders
+					var entries = Paths.cachedReadDirectory(folder);
+					for (name in entries) list.push(name);
 				}
-			}
+			} catch (_:Dynamic) {}
 			#end
 			return list;
 		});

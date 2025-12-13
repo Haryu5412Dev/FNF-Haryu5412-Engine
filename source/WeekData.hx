@@ -237,15 +237,12 @@ class WeekData {
 	}
 
 	public static function setDirectoryFromWeek(?data:WeekData = null) {
-		Paths.currentModDirectory = '';
-		if(data != null && data.folder != null && data.folder.length > 0) {
-			Paths.currentModDirectory = data.folder;
-		}
+		Paths.setCurrentModDirectory((data != null && data.folder != null && data.folder.length > 0) ? data.folder : '');
 	}
 
 	public static function loadTheFirstEnabledMod()
 	{
-		Paths.currentModDirectory = '';
+		Paths.setCurrentModDirectory('');
 		
 		#if MODS_ALLOWED
 		if (FileSystem.exists("modsList.txt"))
@@ -258,7 +255,7 @@ class WeekData {
 				if (dat[1] == "1" && !foundTheTop)
 				{
 					foundTheTop = true;
-					Paths.currentModDirectory = dat[0];
+					Paths.setCurrentModDirectory(dat[0]);
 				}
 			}
 		}
