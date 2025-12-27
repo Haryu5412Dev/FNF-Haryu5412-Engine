@@ -317,6 +317,11 @@ class PauseSubState extends MusicBeatSubstate
 		FlxG.sound.music.volume = 0;
 		PlayState.instance.vocals.volume = 0;
 
+		// Clear any cached lua script contents and pooled lua states so changes are loaded
+		// on restart instead of using stale cached data.
+		try { util.ScriptCache.clear(); } catch (_:Dynamic) {}
+		try { util.LuaPool.clear(); } catch (_:Dynamic) {}
+
 		if(noTrans)
 		{
 			FlxTransitionableState.skipNextTransOut = true;
