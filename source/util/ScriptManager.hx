@@ -28,6 +28,7 @@ class ScriptManager {
 	static var _loaded:Map<String, Bool> = new Map(); // absolutePath -> true
 	static var _scripts:Array<HxScript> = [];
 	static var _lastContextKey:String = '';
+	static var _missingWarned:Map<String, Bool> = new Map(); // (context)|tag -> true
 
 	static inline function modPrefix():String {
 		var cur = Paths.currentModDirectory;
@@ -53,6 +54,7 @@ class ScriptManager {
 		_loaded = new Map();
 		_scripts = [];
 		_lastContextKey = '';
+		_missingWarned = new Map();
 	}
 
 	/**
@@ -91,7 +93,12 @@ class ScriptManager {
 			if (name == null) continue;
 			var trimmed = Std.string(name).trim();
 			if (trimmed.length == 0) continue;
-			loadSingle(Paths.mods(prefix + 'custom_events/' + trimmed + '.hx'), 'event:' + trimmed);
+			var p = Paths.mods(prefix + 'custom_events/' + trimmed + '.hx');
+			if (!FileSystem.exists(p) || FileSystem.isDirectory(p)) {
+				warnMissingOnce('event', trimmed, p);
+				continue;
+			}
+			loadSingle(p, 'event:' + trimmed);
 		}
 		#end
 	}
@@ -105,9 +112,25 @@ class ScriptManager {
 			var trimmed = Std.string(name).trim();
 			if (trimmed.length == 0) continue;
 			if (trimmed == 'null') continue;
-			loadSingle(Paths.mods(prefix + 'custom_notetypes/' + trimmed + '.hx'), 'notetype:' + trimmed);
+			var p = Paths.mods(prefix + 'custom_notetypes/' + trimmed + '.hx');
+			if (!FileSystem.exists(p) || FileSystem.isDirectory(p)) {
+				warnMissingOnce('notetype', trimmed, p);
+				continue;
+			}
+			loadSingle(p, 'notetype:' + trimmed);
 		}
 		#end
+	}
+
+	static function warnMissingOnce(kind:String, name:String, expectedPath:String):Void {
+		try {
+			// Keep it quiet unless debug is enabled, but if enabled, still only warn once per play context.
+			if (!ClientPrefs.hscriptDebug) return;
+			var key = _lastContextKey + '|' + kind + ':' + name;
+			if (_missingWarned.exists(key)) return;
+			_missingWarned.set(key, true);
+			log('ScriptManager: missing ' + kind + ' script for "' + name + '" (expected: ' + expectedPath + ')');
+		} catch (_:Dynamic) {}
 	}
 
 	public static function loadStageScript(stageName:String):Void {
@@ -391,6 +414,13 @@ private class HxScript {
 
 	static function preprocess(code:String):String {
 		if (code == null || code.length == 0) return '';
+		// Normalize common file encodings/line endings for more stable parsing.
+		// (Some editors save UTF-8 BOM, and Windows files often use CRLF.)
+		if (code.length > 0 && code.charCodeAt(0) == 0xFEFF) {
+			code = code.substr(1);
+		}
+		code = code.replace("\r\n", "\n");
+		code = code.replace("\r", "\n");
 		// Standard hscript.Parser can't parse Haxe 'import/using' lines; ignore them.
 		var out = new StringBuf();
 		for (line in code.split('\n')) {
