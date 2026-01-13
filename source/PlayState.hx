@@ -5448,7 +5448,8 @@ class PlayState extends MusicBeatState
 		//trace('Car drive');
 		FlxG.sound.play(Paths.soundRandom('carPass', 0, 1), 0.7);
 
-		fastCar.velocity.x = (FlxG.random.int(170, 220) / FlxG.elapsed) * 3;
+		// velocity is already pixels/second; dividing by elapsed can explode/crash when elapsed == 0 at very high FPS.
+		fastCar.velocity.x = FlxG.random.int(170, 220) * 3;
 		fastCarCanDrive = false;
 		carTimer = new FlxTimer().start(2, function(tmr:FlxTimer)
 		{

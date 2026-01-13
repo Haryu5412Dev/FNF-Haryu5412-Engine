@@ -23,6 +23,7 @@ import sys.io.Process;
 #end
 
 import hxwindowmode.WindowColorMode;
+import util.DisplayUtil;
 
 using StringTools;
 
@@ -75,6 +76,9 @@ class Main extends Sprite
 
 	private function setupGame():Void
 	{
+		// Start the game loop at the monitor refresh rate (helps stability on high-Hz displays).
+		framerate = DisplayUtil.getRefreshRate(framerate);
+
 		var stageWidth:Int = Lib.current.stage.stageWidth;
 		var stageHeight:Int = Lib.current.stage.stageHeight;
 

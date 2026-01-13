@@ -157,17 +157,26 @@ class BaseOptionsMenu extends MusicBeatSubstate
 				usesCheckbox = false;
 			}
 
+			var canChangeOption:Bool = (curOption != null && curOption.enabled);
+
 			if(usesCheckbox)
 			{
 				if(controls.ACCEPT)
 				{
-					FlxG.sound.play(Paths.sound('scrollMenu'));
-					curOption.setValue((curOption.getValue() == true) ? false : true);
-					curOption.change();
-					reloadCheckboxes();
+					if (canChangeOption)
+					{
+						FlxG.sound.play(Paths.sound('scrollMenu'));
+						curOption.setValue((curOption.getValue() == true) ? false : true);
+						curOption.change();
+						reloadCheckboxes();
+					}
+					else
+					{
+						FlxG.sound.play(Paths.sound('cancelMenu'));
+					}
 				}
 			} else {
-				if(controls.UI_LEFT || controls.UI_RIGHT) {
+				if((controls.UI_LEFT || controls.UI_RIGHT) && canChangeOption) {
 					var pressed = (controls.UI_LEFT_P || controls.UI_RIGHT_P);
 					if(holdTime > 0.5 || pressed) {
 						if(pressed) {
@@ -301,17 +310,23 @@ class BaseOptionsMenu extends MusicBeatSubstate
 
 		for (item in grpOptions.members) {
 			item.targetY = bullShit - curSelected;
+			var opt:Option = optionsArray[bullShit];
 			bullShit++;
 
-			item.alpha = 0.6;
+			var baseAlpha:Float = (opt != null && !opt.enabled) ? 0.25 : 0.6;
+			var selectedAlpha:Float = (opt != null && !opt.enabled) ? 0.45 : 1.0;
+			item.alpha = baseAlpha;
 			if (item.targetY == 0) {
-				item.alpha = 1;
+				item.alpha = selectedAlpha;
 			}
 		}
 		for (text in grpTexts) {
-			text.alpha = 0.6;
+			var opt2:Option = optionsArray[text.ID];
+			var baseAlpha2:Float = (opt2 != null && !opt2.enabled) ? 0.25 : 0.6;
+			var selectedAlpha2:Float = (opt2 != null && !opt2.enabled) ? 0.45 : 1.0;
+			text.alpha = baseAlpha2;
 			if(text.ID == curSelected) {
-				text.alpha = 1;
+				text.alpha = selectedAlpha2;
 			}
 		}
 

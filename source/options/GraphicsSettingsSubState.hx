@@ -31,6 +31,10 @@ using StringTools;
 
 class GraphicsSettingsSubState extends BaseOptionsMenu
 {
+	var autoFpsOption:Option;
+	var framerateOption:Option;
+	var _framerateDisplayFormat:String = '%v FPS';
+
 	public function new()
 	{
 		title = 'Graphics';
@@ -61,42 +65,50 @@ class GraphicsSettingsSubState extends BaseOptionsMenu
 		addOption(option);
 
 		#if !html5 //Apparently other framerates isn't correctly supported on Browser? Probably it has some V-Sync shit enabled by default, idk
-		var option:Option = new Option('Framerate',
+		autoFpsOption = new Option('Auto Framerate',
+			'Keeps FPS synced to your monitor refresh rate (recommended).',
+			'autoFramerate',
+			'bool',
+			true);
+		autoFpsOption.onChange = function() {
+			syncFramerateUI();
+			ClientPrefs.applyFramerateSettings(false);
+		};
+		addOption(autoFpsOption);
+
+		framerateOption = new Option('Framerate',
 			"Pretty self explanatory, isn't it?",
 			'framerate',
 			'int',
 			60);
-		addOption(option);
+		addOption(framerateOption);
 
-		option.minValue = 60;
-		option.maxValue = 240;
-		option.displayFormat = '%v FPS';
-		option.onChange = onChangeFramerate;
+		framerateOption.minValue = 60;
+		framerateOption.maxValue = 240;
+		framerateOption.displayFormat = _framerateDisplayFormat;
+		framerateOption.onChange = onChangeFramerate;
 		#end
-
-		// V-Sync toggle
-		var optVsync:Option = new Option('V-Sync',
-			'Synchronize frame swaps to display refresh to reduce tearing. May add slight input latency.',
-			'vsync',
-			'bool',
-			true);
-		optVsync.onChange = function() {
-			#if sys
-			try {
-				var win:Dynamic = openfl.Lib.application.window;
-				if (win != null && Reflect.hasField(win, "vsync")) {
-					Reflect.setProperty(win, "vsync", ClientPrefs.vsync);
-				}
-			} catch (_:Dynamic) {}
-			#end
-		};
-		addOption(optVsync);
 
 		var option:Option = new Option('Use FlxAnimate (Experimental)',
 			'Use FlxAnimate for Animate CC atlases when available. Requires library; may increase compatibility and reduce memory.','useFlxAnimate','bool',false);
 		addOption(option);
 
 		super();
+		#if !html5
+		syncFramerateUI();
+		#end
+	}
+
+	function syncFramerateUI():Void
+	{
+		#if !html5
+		if (framerateOption == null) return;
+		var auto:Bool = ClientPrefs.autoFramerate;
+		framerateOption.enabled = !auto;
+		// When auto is enabled, show a non-interactive label so it doesn't look like a "real" slider.
+		framerateOption.displayFormat = auto ? 'Auto (%v FPS)' : _framerateDisplayFormat;
+		updateTextFrom(framerateOption);
+		#end
 	}
 
 	function onChangeAntiAliasing()
@@ -113,15 +125,6 @@ class GraphicsSettingsSubState extends BaseOptionsMenu
 
 	function onChangeFramerate()
 	{
-		if(ClientPrefs.framerate > FlxG.drawFramerate)
-		{
-			FlxG.updateFramerate = ClientPrefs.framerate;
-			FlxG.drawFramerate = ClientPrefs.framerate;
-		}
-		else
-		{
-			FlxG.drawFramerate = ClientPrefs.framerate;
-			FlxG.updateFramerate = ClientPrefs.framerate;
-		}
+		ClientPrefs.applyFramerateSettings(false);
 	}
 }

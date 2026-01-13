@@ -8,6 +8,7 @@ import Controls;
 import Paths;
 #if sys
 import util.ThreadPool;
+import util.DisplayUtil;
 import openfl.Lib;
 #end
 
@@ -26,6 +27,8 @@ class ClientPrefs
 	public static var lowQuality:Bool = false;
 	public static var shaders:Bool = true;
 	public static var framerate:Int = 63;
+	// If enabled, keep the game's framerate synced to the current display refresh rate.
+	public static var autoFramerate:Bool = true;
 	// Synchronize buffer swaps to display refresh to reduce tearing
 	public static var vsync:Bool = true;
 	// Experimental: Prefer FlxAnimate for Animate atlas assets where available
@@ -143,6 +146,7 @@ class ClientPrefs
 		FlxG.save.data.lowQuality = lowQuality;
 		FlxG.save.data.shaders = shaders;
 		FlxG.save.data.framerate = framerate;
+		FlxG.save.data.autoFramerate = autoFramerate;
 		FlxG.save.data.useFlxAnimate = useFlxAnimate;
 		FlxG.save.data.vsync = vsync;
 		FlxG.save.data.workerThreads = workerThreads;
@@ -265,6 +269,10 @@ class ClientPrefs
 		{
 			workerThreads = FlxG.save.data.workerThreads;
 		}
+		if (FlxG.save.data.autoFramerate != null)
+		{
+			autoFramerate = FlxG.save.data.autoFramerate;
+		}
         if (FlxG.save.data.vsync != null)
         {
             vsync = FlxG.save.data.vsync;
@@ -307,14 +315,15 @@ class ClientPrefs
 		}
 		if(FlxG.save.data.framerate != null) {
 			framerate = FlxG.save.data.framerate;
-			if(framerate > FlxG.drawFramerate) {
-				FlxG.updateFramerate = framerate;
-				FlxG.drawFramerate = framerate;
-			} else {
-				FlxG.drawFramerate = framerate;
-				FlxG.updateFramerate = framerate;
-			}
+		} else {
+			// First run: pick a sensible framerate based on the monitor refresh rate.
+			#if sys
+			framerate = DisplayUtil.getRefreshRate(60);
+			#else
+			framerate = 60;
+			#end
 		}
+		applyFramerateSettings(true);
 		if (FlxG.save.data.useFlxAnimate != null) {
 			useFlxAnimate = FlxG.save.data.useFlxAnimate;
 		}
@@ -440,6 +449,60 @@ class ClientPrefs
 
 		// Apply runtime tuning knobs after all prefs are loaded
 		applyRuntimeTuning();
+	}
+
+	static var _refreshProbeCooldown:Float = 0;
+	static var _lastRefreshRate:Int = 0;
+
+	public static function tickDisplayRefreshSync(elapsed:Float):Void
+	{
+		if (!autoFramerate) return;
+		_refreshProbeCooldown -= elapsed;
+		if (_refreshProbeCooldown > 0) return;
+		_refreshProbeCooldown = 1.0; // probe about once per second
+
+		#if sys
+		var rr:Int = DisplayUtil.getRefreshRate(framerate);
+		if (rr > 0 && rr != _lastRefreshRate)
+		{
+			_lastRefreshRate = rr;
+			if (framerate != rr)
+			{
+				framerate = rr;
+				applyFramerateSettings(false);
+			}
+		}
+		#end
+	}
+
+	public static function applyFramerateSettings(fromLoad:Bool):Void
+	{
+		#if !html5
+		var target:Int = framerate;
+		#if sys
+		if (autoFramerate)
+		{
+			target = DisplayUtil.getRefreshRate(target);
+		}
+		#end
+		if (target <= 0) target = 60;
+
+		// Keep prefs in sync when auto mode is on
+		if (autoFramerate) framerate = target;
+
+		// Avoid redundant assignments
+		if (FlxG.drawFramerate == target && FlxG.updateFramerate == target) return;
+		if (target > FlxG.drawFramerate)
+		{
+			FlxG.updateFramerate = target;
+			FlxG.drawFramerate = target;
+		}
+		else
+		{
+			FlxG.drawFramerate = target;
+			FlxG.updateFramerate = target;
+		}
+		#end
 	}
 
 	inline public static function getGameplaySetting(name:String, defaultValue:Dynamic):Dynamic

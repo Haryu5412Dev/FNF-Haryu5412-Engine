@@ -45,6 +45,8 @@ class MusicBeatState extends FlxUIState
 
 	override function update(elapsed:Float)
 	{
+		ClientPrefs.tickDisplayRefreshSync(elapsed);
+
 		//everyStep();
 		var oldStep:Int = curStep;
 
