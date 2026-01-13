@@ -27,6 +27,7 @@ using StringTools;
 
 class Paths
 {
+	static var _missingGraphicsLogged:Map<String, Bool> = [];
 	inline public static var SOUND_EXT = #if web "mp3" #else "ogg" #end;
 	inline public static var VIDEO_EXT = "mp4";
 
@@ -560,9 +561,15 @@ class Paths
 	// completely rewritten asset loading? fuck!
 	public static var currentTrackedAssets:Map<String, FlxGraphic> = [];
 	public static function returnGraphic(key:String, ?library:String) {
+		var resolvedPath:String = null;
 		#if MODS_ALLOWED
-		var modKey:String = modsImages(key);
-		if(sysExists(modKey)) {
+		var modKey:String = null;
+		var modExists:Bool = false;
+		#end
+		#if MODS_ALLOWED
+		modKey = modsImages(key);
+		modExists = sysExists(modKey);
+		if(modExists) {
 			if(!currentTrackedAssets.exists(modKey)) {
 				var newBitmap:BitmapData = BitmapData.fromFile(modKey);
 				var newGraphic:FlxGraphic = FlxGraphic.fromBitmapData(newBitmap, false, modKey);
@@ -575,6 +582,7 @@ class Paths
 		#end
 
 		var path = getPath('images/$key.png', IMAGE, library);
+		resolvedPath = path;
 		//trace(path);
 		if (OpenFlAssets.exists(path, IMAGE)) {
 			if(!currentTrackedAssets.exists(path)) {
@@ -585,7 +593,28 @@ class Paths
 			localTrackedAssets.push(path);
 			return currentTrackedAssets.get(path);
 		}
-		trace('oh no its returning null NOOOO');
+
+		// Detailed missing-asset log (old message: "oh no its returning null NOOOO")
+		var logKey = (library == null ? '' : library) + '|' + key;
+		var shouldLog = true;
+		try {
+			// If debug is off, only log once per (library,key) to avoid console spam.
+			if (!ClientPrefs.hscriptDebug) {
+				shouldLog = !_missingGraphicsLogged.exists(logKey);
+			}
+		} catch (_:Dynamic) {}
+		if (shouldLog) {
+			_missingGraphicsLogged.set(logKey, true);
+			var msg = 'Paths.returnGraphic: null (missing image) key=' + key +
+				' library=' + Std.string(library) +
+				' resolved=' + Std.string(resolvedPath);
+			#if MODS_ALLOWED
+			msg += ' modKey=' + Std.string(modKey) +
+				' modExists=' + Std.string(modExists) +
+				' currentModDirectory=' + Std.string(currentModDirectory);
+			#end
+			trace(msg);
+		}
 		return null;
 	}
 
