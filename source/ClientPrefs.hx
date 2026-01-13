@@ -42,6 +42,8 @@ class ClientPrefs
 	public static var textCacheKB:Int = 1024;
 	// Cache directory listings for mods/* to speed up script discovery
 	public static var modsDirCache:Bool = true;
+	// Log HScript mod script loads/calls/errors
+	public static var hscriptDebug:Bool = false;
 	// Keep frequently used graphics persisted in GPU/bitmap cache for faster renders
 	public static var gpuPrecache:Bool = true;
 	// Wait for Inst/Voices to be preloaded before finishing LoadingState
@@ -153,6 +155,7 @@ class ClientPrefs
 		FlxG.save.data.aggressiveMemory = aggressiveMemory;
 		FlxG.save.data.textCacheKB = textCacheKB;
 		FlxG.save.data.modsDirCache = modsDirCache;
+		FlxG.save.data.hscriptDebug = hscriptDebug;
 		FlxG.save.data.gpuPrecache = gpuPrecache;
 		FlxG.save.data.waitAudioPreload = waitAudioPreload;
 		FlxG.save.data.prewarmPixelAssets = prewarmPixelAssets;
@@ -288,6 +291,10 @@ class ClientPrefs
 		if (FlxG.save.data.modsDirCache != null)
 		{
 			modsDirCache = FlxG.save.data.modsDirCache;
+		}
+		if (FlxG.save.data.hscriptDebug != null)
+		{
+			hscriptDebug = FlxG.save.data.hscriptDebug;
 		}
 		if (FlxG.save.data.gpuPrecache != null)
 		{

@@ -80,6 +80,7 @@ import sys.io.Process;
 import openfl.Assets;
 
 import HoldSplashEffect;
+import util.ScriptManager;
 
 using StringTools;
 
@@ -936,6 +937,12 @@ class PlayState extends MusicBeatState
 		add(luaDebugGroup);
 		#end
 
+		#if hscript
+		// Reset per-play script context (current mod only)
+		ScriptManager.setContextKey(Paths.currentModDirectory + '|' + Paths.formatToSongPath(SONG.song));
+		ScriptManager.loadGlobalScripts();
+		#end
+
 		// "GLOBAL" SCRIPTS
 		#if LUA_ALLOWED
 		var filesPushed:Array<String> = [];
@@ -989,6 +996,9 @@ class PlayState extends MusicBeatState
 			util.ScriptCache.preload([luaFile]);
 			luaArray.push(new FunkinLua(luaFile));
 		}
+		#end
+		#if hscript
+		ScriptManager.loadStageScript(curStage);
 		#end
 
 		var gfVersion:String = SONG.gfVersion;
@@ -1316,10 +1326,23 @@ class PlayState extends MusicBeatState
 			#end
 		}
 		#end
+		#if hscript
+		// Only load what the chart actually uses (current mod only)
+		var _noteTypesUsed:Array<String> = [];
+		for (k in noteTypeMap.keys()) _noteTypesUsed.push(k);
+		var _eventsUsed:Array<String> = [];
+		for (k in eventPushedMap.keys()) _eventsUsed.push(k);
+		ScriptManager.loadCustomNoteTypeScripts(_noteTypesUsed);
+		ScriptManager.loadCustomEventScripts(_eventsUsed);
+		#end
 		noteTypeMap.clear();
 		noteTypeMap = null;
 		eventPushedMap.clear();
 		eventPushedMap = null;
+
+		#if hscript
+		ScriptManager.loadSongScripts(SONG.song);
+		#end
 
 		// SONG SPECIFIC SCRIPTS
 		#if LUA_ALLOWED
@@ -1352,6 +1375,10 @@ class PlayState extends MusicBeatState
 				for (p in toPreload) luaArray.push(new FunkinLua(p));
 			}
 		}
+		#end
+
+		#if hscript
+		ScriptManager.call('onCreate', []);
 		#end
 
 		var daSong:String = Paths.formatToSongPath(curSong);
@@ -1455,6 +1482,9 @@ class PlayState extends MusicBeatState
 			FlxG.stage.addEventListener(KeyboardEvent.KEY_UP, onKeyRelease);
 		}
 		callOnLuas('onCreatePost', []);
+		#if hscript
+		ScriptManager.call('onCreatePost', []);
+		#end
 
 		super.create();
 
@@ -1665,6 +1695,10 @@ class PlayState extends MusicBeatState
 			}
 			luaArray.push(new FunkinLua(luaFile));
 		}
+		#end
+		#if hscript
+		// Optional: current-mod character script (mods/<mod>/characters/<name>.hx)
+		ScriptManager.loadCharacterScript(name);
 		#end
 	}
 
@@ -3458,6 +3492,9 @@ class PlayState extends MusicBeatState
 			iconP1.swapOldIcon();
 		}*/
 		callOnLuas('onUpdate', [elapsed]);
+		#if hscript
+		ScriptManager.call('onUpdate', [elapsed]);
+		#end
 
 		switch (curStage)
 		{
@@ -3738,6 +3775,9 @@ class PlayState extends MusicBeatState
 				notes.insert(0, dunceNote);
 				dunceNote.spawned=true;
 				callOnLuas('onSpawnNote', [notes.members.indexOf(dunceNote), dunceNote.noteData, dunceNote.noteType, dunceNote.isSustainNote]);
+				#if hscript
+				ScriptManager.call('onSpawnNote', [notes.members.indexOf(dunceNote), dunceNote.noteData, dunceNote.noteType, dunceNote.isSustainNote, dunceNote.strumTime]);
+				#end
 
 				var index:Int = unspawnNotes.indexOf(dunceNote);
 				unspawnNotes.splice(index, 1);
@@ -3995,7 +4035,7 @@ class PlayState extends MusicBeatState
 			if(eventNotes[0].value2 != null)
 				value2 = eventNotes[0].value2;
 
-			triggerEventNote(eventNotes[0].event, value1, value2);
+			triggerEventNote(eventNotes[0].event, value1, value2, leStrumTime);
 			eventNotes.shift();
 		}
 	}
@@ -4006,7 +4046,8 @@ class PlayState extends MusicBeatState
 		return pressed;
 	}
 
-	public function triggerEventNote(eventName:String, value1:String, value2:String) {
+	public function triggerEventNote(eventName:String, value1:String, value2:String, ?strumTime:Float) {
+		var _strumTime:Float = (strumTime == null) ? Conductor.songPosition : strumTime;
 		switch(eventName) {
 			case 'Dadbattle Spotlight':
 				var val:Null<Int> = Std.parseInt(value1);
@@ -4386,6 +4427,9 @@ class PlayState extends MusicBeatState
 				}
 		}
 		callOnLuas('onEvent', [eventName, value1, value2]);
+		#if hscript
+		ScriptManager.call('onEvent', [eventName, value1, value2, _strumTime]);
+		#end
 	}
 
 	function moveCameraSection():Void {
@@ -4623,6 +4667,9 @@ class PlayState extends MusicBeatState
 				FlxG.sound.playMusic(Paths.music('freakyMenu'));
 				changedDifficulty = false;
 			}
+			#if hscript
+			ScriptManager.reset();
+			#end
 			transitioning = true;
 		}
 	}
@@ -5160,6 +5207,9 @@ class PlayState extends MusicBeatState
 		}
 
 		callOnLuas('noteMiss', [notes.members.indexOf(daNote), daNote.noteData, daNote.noteType, daNote.isSustainNote]);
+		#if hscript
+		ScriptManager.call('onNoteMiss', [notes.members.indexOf(daNote), daNote.noteData, daNote.noteType, daNote.isSustainNote, daNote.strumTime]);
+		#end
 	}
 
 	function noteMissPress(direction:Int = 1):Void //You pressed a key when there was no notes to press for this key
@@ -5388,6 +5438,9 @@ class PlayState extends MusicBeatState
 				var leData:Int = Math.round(Math.abs(note.noteData));
 				var leType:String = note.noteType;
 				callOnLuas('goodNoteHit', [notes.members.indexOf(note), leData, leType, isSus]);
+				#if hscript
+				ScriptManager.call('onGoodNoteHit', [notes.members.indexOf(note), leData, leType, isSus, note.strumTime]);
+				#end
 		
 				if (!note.isSustainNote)
 				{

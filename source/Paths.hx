@@ -711,6 +711,32 @@ class Paths
 		return def;
 	}
 
+	/**
+	 * Resolve a file inside the *current* mod only.
+	 * Returns null when no current mod is selected or the file doesn't exist.
+	 *
+	 * This intentionally ignores global mods for deterministic, per-mod behavior.
+	 */
+	public static function currentModFile(key:String):Null<String> {
+		#if sys
+		if (currentModDirectory == null || currentModDirectory.length == 0) return null;
+		var fileToCheck:String = mods(currentModDirectory + '/' + key);
+		return sysExists(fileToCheck) ? fileToCheck : null;
+		#else
+		return null;
+		#end
+	}
+
+	/**
+	 * Resolve current-mod override first, otherwise fallback to preload path.
+	 * Useful for systems that should only respect the selected mod.
+	 */
+	public static function currentModOrPreload(key:String):String {
+		var modded = currentModFile(key);
+		if (modded != null) return modded;
+		return getPreloadPath(key);
+	}
+
 	public static var globalMods:Array<String> = [];
 
 	static public function getGlobalMods()
